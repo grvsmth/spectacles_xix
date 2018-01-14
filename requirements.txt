@@ -1,0 +1,6 @@
+-f /usr/share/pip-wheels
+beautifulsoup4==4.6.0
+bs4==0.0.1
+mysqlclient==1.3.12
+pytz==2017.3
+twitter==1.18.0
