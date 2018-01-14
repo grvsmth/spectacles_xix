@@ -19,6 +19,8 @@ from play import Play
 
 # TODO look up book image
 
+# TODO deal with extra plays that were dumped on the first of the month/year
+
 CONFIG_PATH = 'spectacles_xix/config'
 TIMEZONE = 'Europe/Paris'
 DATE_FORMAT = "%A le %d %B %Y"
@@ -158,8 +160,39 @@ def get_date(date_string=None):
 
     return our_date
 
-def find_spacing(in_list):
-    pass
+def get_hour():
+    """
+    Get the hour in our timezone
+    """
+    local_now = pytz.timezone(TIMEZONE).localize(datetime.now())
+    return local_now.hour
+
+def time_to_tweet(play_count):
+    """
+    Determine whether this is a good time to tweet
+    """
+    this_hour = get_hour()
+    hours_remaining = 23 - this_hour
+    hours_per_tweet = hours_remaining / play_count
+    print("{} hours remaining / {} plays = {}".format(
+        hours_remaining,
+        play_count,
+        hours_per_tweet
+        ))
+
+    # if we have 1 or less hours per tweet, then just tweet
+    if hours_per_tweet <= 1:
+        return True
+
+    # if it's after noon (6AM New York time) and we have a play every two hours
+    if this_hour > 12 and hours_per_tweet <= 2:
+        return True
+
+    # if it's after 3PM (9AM New York time) and we have a play every three hours
+    if this_hour > 7 and hours_per_tweet <= 3:
+        return True
+
+    return False
 
 def send_tweet(config, message):
     """
@@ -178,7 +211,7 @@ if __name__ == '__main__':
     PARSER = argparse.ArgumentParser(
         description='Compose and send a tweet about a play from the Parisian Stage'
         )
-    PARSER.add_argument('--no_tweet')
+    PARSER.add_argument('--no_tweet', action='store_true')
     PARSER.add_argument('-d', '--date', type=str)
     ARGS = PARSER.parse_args()
     OUR_DATE = get_date(ARGS.date)
@@ -188,11 +221,17 @@ if __name__ == '__main__':
     if not PLAY_LIST:
         print("No plays for {}".format(OUR_DATE.strftime(DATE_FORMAT)))
         exit(0)
+
+    if not time_to_tweet(len(PLAY_LIST)):
+        exit(0)
+
     GENRE = expand_abbreviation(CONFIG['db'], PLAY_LIST[0]['genre'])
     MESSAGE = str(Play(PLAY_LIST[0], OUR_DATE.strftime(DATE_FORMAT), GENRE))
+    print(MESSAGE)
+
     if ARGS.no_tweet:
         exit(0)
-    print(MESSAGE)
+
     STATUS = send_tweet(CONFIG['twitter'], MESSAGE)
     if 'id' in STATUS:
         print("Sent tweet ID# {}".format(STATUS['id']))
