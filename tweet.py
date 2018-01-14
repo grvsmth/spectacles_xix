@@ -19,7 +19,8 @@ from play import Play
 
 # TODO look up book image
 
-# TODO deal with extra plays that were dumped on the first of the month/year
+# TODO deal with extra plays that were dumped on the first of the month/year;
+# this should be done by January 1, 2019
 
 CONFIG_PATH = 'spectacles_xix/config'
 TIMEZONE = 'Europe/Paris'

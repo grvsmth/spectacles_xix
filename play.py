@@ -79,4 +79,5 @@ class Play:
         else:
             print("No description found for play {}".format(self.id))
 
+        # TODO if description is greater than 280 characters, use a shorter template
         return self.description
