@@ -43,19 +43,27 @@ def load_config():
 
     return config
 
-def load_from_db(config, play_date):
+def load_from_db(config, greg_date=None, wicks=None):
     """
     Load data from db
     """
+    play_list = []
+
+    if not wicks and not greg_date:
+        return play_list
+
+    lookup_col = 'wicks'
+    lookup_term = wicks
+    if not wicks:
+        lookup_col = 'greg_date'
+        lookup_term = greg_date.isoformat()
 
     playq = """SELECT id, wicks, title, author, genre, acts, format,
     music, spectacle_play.theater_code, theater_name, rev_date
     FROM spectacle_play RIGHT JOIN spectacle_theater USING (theater_code)
     WHERE last_tweeted IS NULL
-    AND greg_date = %s
-    """
-
-    play_list = []
+    AND {} = %s
+    """.format(lookup_col)
 
     with MySQLdb.connect(
         config['host'],
@@ -70,10 +78,10 @@ def load_from_db(config, play_date):
         cursor.execute('SET CHARACTER SET utf8;')
         cursor.execute('SET character_set_connection=utf8;')
         try:
-            cursor.execute(playq, [play_date.isoformat()])
+            cursor.execute(playq, [lookup_term])
             play_res = cursor.fetchall()
         except MySQLdb.DatabaseError as err:
-            print("Error retrieving plays for {}: {}".format(play_date, err))
+            print("Error retrieving plays for {}: {}".format(lookup_term, err))
             return play_list
 
         for row in play_res:
@@ -91,7 +99,7 @@ def expand_abbreviation(config, abbrev):
     if not abbrev:
         return None
 
-    # TODO find abbreviated words and iterate through them
+    # Find abbreviated words and iterate through them
     abbrev_match = re.finditer('(\w+)\.', abbrev)
     if not abbrev_match:
         return abbrev
@@ -226,21 +234,27 @@ if __name__ == '__main__':
         )
     PARSER.add_argument('--no_tweet', action='store_true')
     PARSER.add_argument('-d', '--date', type=str)
-    # TODO argument to tweet by Wicks number
+    PARSER.add_argument('-w', '--wicks', type=str)
     ARGS = PARSER.parse_args()
-    OUR_DATE = get_date(ARGS.date)
+    GREG_DATE = get_date(ARGS.date)
 
     CONFIG = load_config()
-    PLAY_LIST = load_from_db(CONFIG['db'], OUR_DATE)
+    if ARGS.wicks:
+        PLAY_LIST = load_from_db(CONFIG['db'], wicks=ARGS.wicks)
+        LOOKUP_TERM = ARGS.wicks
+    else:
+        PLAY_LIST = load_from_db(CONFIG['db'], greg_date=GREG_DATE)
+        LOOKUP_TERM = GREG_DATE.strftime(DATE_FORMAT)
+
     if not PLAY_LIST:
-        print("No plays for {}".format(OUR_DATE.strftime(DATE_FORMAT)))
+        print("No plays for {}".format(LOOKUP_TERM))
         exit(0)
 
     if not ARGS.no_tweet and not time_to_tweet(len(PLAY_LIST)):
         exit(0)
 
     GENRE = expand_abbreviation(CONFIG['db'], PLAY_LIST[0]['genre'])
-    MESSAGE = str(Play(PLAY_LIST[0], OUR_DATE.strftime(DATE_FORMAT), GENRE))
+    MESSAGE = str(Play(PLAY_LIST[0], GREG_DATE.strftime(DATE_FORMAT), GENRE))
     print(MESSAGE)
 
     if ARGS.no_tweet:
