@@ -226,6 +226,7 @@ if __name__ == '__main__':
         )
     PARSER.add_argument('--no_tweet', action='store_true')
     PARSER.add_argument('-d', '--date', type=str)
+    # TODO argument to tweet by Wicks number
     ARGS = PARSER.parse_args()
     OUR_DATE = get_date(ARGS.date)
 
