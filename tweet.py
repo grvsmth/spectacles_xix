@@ -210,7 +210,7 @@ def time_to_tweet(play_count):
         return True
 
     # if it's after 3PM (9AM New York time) and we have a play every three hours
-    if this_hour > 7 and hours_per_tweet <= 3:
+    if this_hour > 15 and hours_per_tweet <= 3:
         return True
 
     return False
