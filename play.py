@@ -4,7 +4,8 @@ Play - class for storing information about plays
 
 TEMPLATE = {
     'basic': '{0.title},{0.author_string} {0.gaf},{0.music_string} a débuté {0.date} {0.theater_string}. Wicks {0.wicks}.',
-    'short': '{0.title},{0.author_string} {0.gaf},{0.music_string} a débuté {0.date} {0.theater_string}. Wicks {0.wicks}.'
+    'short': '{0.title},{0.author_string} {0.gaf},{0.music_string} a débuté {0.date} {0.theater_string}. Wicks {0.wicks}.',
+    'shorter': '{0.title},{0.author} {0.date} {0.theater_code}. Wicks {0.wicks}.'
     }
 
 EXPAND_FORMAT = {
@@ -112,6 +113,6 @@ class Play:
                 self.id,
                 len(self.description)
                 ))
-            self.description = self.title
+            self.description = TEMPLATE['shorter'].format(self)
 
         return self.description
