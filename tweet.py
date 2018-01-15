@@ -8,6 +8,7 @@ from datetime import datetime
 import json
 import locale
 from pathlib import Path
+import re
 
 import MySQLdb
 import MySQLdb.cursors
@@ -16,6 +17,8 @@ import pytz
 from twitter import Twitter, OAuth
 
 from play import Play
+
+# TODO package
 
 # TODO look up book image
 
@@ -88,7 +91,12 @@ def expand_abbreviation(config, abbrev):
     if not abbrev:
         return None
 
-    expansion = abbrev
+    # TODO find abbreviated words and iterate through them
+    abbrev_match = re.finditer('(\w+)\.', abbrev)
+    if not abbrev_match:
+        return abbrev
+
+    replacements = set()
 
     with MySQLdb.connect(
         config['host'],
@@ -102,22 +110,26 @@ def expand_abbreviation(config, abbrev):
         cursor.execute('SET CHARACTER SET utf8;')
         cursor.execute('SET character_set_connection=utf8;')
 
-        # TODO find abbreviated words and iterate through them
+        for mo in abbrev_match:
+            this_abbrev = mo.group(1)
 
+            try:
+                cursor.execute(abbrevq, [this_abbrev])
 
-        try:
-            cursor.execute(abbrevq, [abbrev])
+            except MySQLdb.DatabaseError as err:
+                print("Error retrieving expansion for abbreviation {}: {}".format(
+                    abbrev,
+                    err
+                    ))
+            res = cursor.fetchone()
 
-        except MySQLdb.DatabaseError as err:
-            print("Error retrieving expansion for abbreviation {}: {}".format(
-                abbrev,
-                err
-                ))
-        res = cursor.fetchone()
-        if res:
-            expansion = res
+            if res:
+                replacements.add((this_abbrev, res[0]))
 
-    return expansion
+    for (this_abbrev, this_exp) in replacements:
+        abbrev = abbrev.replace(this_abbrev + '.', this_exp)
+
+    return abbrev
 
 def tweet_db(config, play_id):
     """
@@ -223,7 +235,7 @@ if __name__ == '__main__':
         print("No plays for {}".format(OUR_DATE.strftime(DATE_FORMAT)))
         exit(0)
 
-    if not time_to_tweet(len(PLAY_LIST)):
+    if not ARGS.no_tweet and not time_to_tweet(len(PLAY_LIST)):
         exit(0)
 
     GENRE = expand_abbreviation(CONFIG['db'], PLAY_LIST[0]['genre'])
