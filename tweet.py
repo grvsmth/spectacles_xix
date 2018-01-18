@@ -17,6 +17,7 @@ import pytz
 from twitter import Twitter, OAuth
 
 from play import Play
+import check_books
 
 # TODO package
 
@@ -36,10 +37,11 @@ def load_config():
     """
     Load config
     """
-    config = {}
+    config = {'path': {}}
     config_path = Path(Path.home(), CONFIG_PATH)
     for cfile in config_path.glob('*.json'):
         config_name = cfile.stem
+        config['path'][config_name] = str(cfile)
         with cfile.open() as cfh:
             config[config_name] = json.load(cfh)
 
@@ -237,6 +239,7 @@ if __name__ == '__main__':
     PARSER.add_argument('--no_tweet', action='store_true')
     PARSER.add_argument('-d', '--date', type=str)
     PARSER.add_argument('-w', '--wicks', type=str)
+    PARSER.add_argument('-b', '--book', action='store_true')
     ARGS = PARSER.parse_args()
     GREG_DATE = get_date(ARGS.date)
 
@@ -256,13 +259,22 @@ if __name__ == '__main__':
         exit(0)
 
     GENRE = expand_abbreviation(CONFIG['db'], PLAY_LIST[0]['genre'])
-    MESSAGE = str(Play(PLAY_LIST[0], GREG_DATE.strftime(DATE_FORMAT), GENRE))
-    print(MESSAGE)
+    PLAY = Play(PLAY_LIST[0], GREG_DATE.strftime(DATE_FORMAT), GENRE)
+    print(PLAY)
+
+    if ARGS.book:
+        books_api = check_books.get_api(CONFIG['path']['google_service_account'])
+        thumbnail_url = check_books.search_api(
+                books_api,
+                "intitle:{} inauthor:{}".format(PLAY.title, PLAY.author)
+                )['volumeInfo']['imageLinks']
+        # &zoom=3 no curl
+        print(thumbnail_url)
 
     if ARGS.no_tweet:
         exit(0)
 
-    STATUS = send_tweet(CONFIG['twitter'], MESSAGE)
+    STATUS = send_tweet(CONFIG['twitter'], str(PLAY))
     if 'id' in STATUS:
         print("Sent tweet ID# {}".format(STATUS['id']))
         tweet_db(CONFIG['db'], PLAY_LIST[0]['id'])

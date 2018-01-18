@@ -1,25 +1,25 @@
-from pathlib import Path
+#from pathlib import Path
 
 from google.oauth2 import service_account
 import googleapiclient.discovery
 
-CONFIG_PATH_STRING = 'spectacles_xix/config'
-CONFIG_PATH = Path(
-    Path.home(),
-    CONFIG_PATH_STRING,
-    'google_service_account.json'
-    )
-
-
 SCOPES = ['https://www.googleapis.com/auth/books']
-SERVICE_ACCOUNT_FILE = str(CONFIG_PATH)
 
-credentials = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE,
+
+
+def get_api(config_fn):
+    credentials = service_account.Credentials.from_service_account_file(
+        config_fn,
         scopes=SCOPES
         )
+    return googleapiclient.discovery.build('books', 'v1', credentials=credentials)
 
-books = googleapiclient.discovery.build('books', 'v1', credentials=credentials)
-
-response = books.volumes().list(q='karabi', filter='free-ebooks').execute()
-print(response)
+def search_api(api, term):
+    vol_list = api.volumes().list(
+        q=term,
+        filter='free-ebooks',
+        langRestrict='fr'
+        ).execute()
+    if vol_list['totalItems'] > 0:
+        return vol_list['items'][0]
+    return None
