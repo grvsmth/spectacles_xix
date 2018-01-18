@@ -3,9 +3,9 @@ Play - class for storing information about plays
 """
 
 TEMPLATE = {
-    'basic': '{0.title},{0.author_string} {0.gaf},{0.music_string} a débuté {0.date} {0.theater_string}. Wicks {0.wicks}.',
-    'short': '{0.title},{0.author_string} {0.gaf},{0.music_string} a débuté {0.date} {0.theater_string}. Wicks {0.wicks}.',
-    'shorter': '{0.title},{0.author} {0.date} {0.theater_code}. Wicks {0.wicks}.'
+    'basic': '{0.title},{0.author_string} {0.gaf},{0.music_string} a débuté #CeJourLà {0.date} {0.theater_string}. Wicks nº. {0.wicks}.',
+    'short': '{0.title},{0.author_string} {0.gaf},{0.music_string} a débuté #CeJourLà {0.date} {0.theater_string}. Wicks nº. {0.wicks}.',
+    'shorter': '{0.title},{0.author} #CeJourLà {0.date} {0.theater_code}. Wicks nº. {0.wicks}.'
     }
 
 EXPAND_FORMAT = {
