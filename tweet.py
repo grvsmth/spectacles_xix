@@ -286,7 +286,6 @@ if __name__ == '__main__':
             thumbnail_url = book_result['volumeInfo']['imageLinks'].get('thumbnail')
             thumbnail_url = thumbnail_url.replace('zoom=1', 'zoom=3')
             thumbnail_url = thumbnail_url.replace('&edge=curl', '')
-            # &zoom=3 no curl
             print(thumbnail_url)
 
     if ARGS.no_tweet:
