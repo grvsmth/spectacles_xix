@@ -241,7 +241,7 @@ if __name__ == '__main__':
     PARSER = argparse.ArgumentParser(
         description='Compose and send a tweet about a play from the Parisian Stage'
         )
-    PARSER.add_argument('--no_tweet', action='store_true')
+    PARSER.add_argument('-n', '--no_tweet', action='store_true')
     PARSER.add_argument('-d', '--date', type=str)
     PARSER.add_argument('-w', '--wicks', type=str)
     PARSER.add_argument('-b', '--book', action='store_true')
@@ -278,12 +278,16 @@ if __name__ == '__main__':
 
     if ARGS.book:
         books_api = check_books.get_api(CONFIG['path']['google_service_account'])
-        thumbnail_url = check_books.search_api(
-                books_api,
-                "intitle:{} inauthor:{}".format(PLAY.title, PLAY.author)
-                )['volumeInfo']['imageLinks']
-        # &zoom=3 no curl
-        print(thumbnail_url)
+        book_result = check_books.search_api(
+            books_api,
+            "intitle:{} inauthor:{}".format(PLAY.title, PLAY.author)
+            )
+        if book_result:
+            thumbnail_url = book_result['volumeInfo']['imageLinks'].get('thumbnail')
+            thumbnail_url = thumbnail_url.replace('zoom=1', 'zoom=3')
+            thumbnail_url = thumbnail_url.replace('&edge=curl', '')
+            # &zoom=3 no curl
+            print(thumbnail_url)
 
     if ARGS.no_tweet:
         exit(0)

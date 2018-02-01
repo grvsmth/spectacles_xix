@@ -5,8 +5,6 @@ import googleapiclient.discovery
 
 SCOPES = ['https://www.googleapis.com/auth/books']
 
-
-
 def get_api(config_fn):
     credentials = service_account.Credentials.from_service_account_file(
         config_fn,
