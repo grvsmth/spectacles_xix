@@ -47,11 +47,17 @@ def load_config():
 
     return config
 
-def load_from_db(config, greg_date=None, wicks=None):
+def load_from_db(config, greg_date=None, wicks=None, tweeted=False):
     """
     Load data from db
     """
     play_list = []
+
+    where_tweeted = {
+        True: '',
+        False: 'last_tweeted IS NULL\n    AND '
+        }
+
 
     if not wicks and not greg_date:
         return play_list
@@ -65,9 +71,8 @@ def load_from_db(config, greg_date=None, wicks=None):
     playq = """SELECT id, wicks, title, author, genre, acts, format,
     music, spectacle_play.theater_code, theater_name, rev_date
     FROM spectacle_play RIGHT JOIN spectacle_theater USING (theater_code)
-    WHERE last_tweeted IS NULL
-    AND {} = %s
-    """.format(lookup_col)
+    WHERE {}{} = %s
+    """.format(where_tweeted[tweeted], lookup_col)
 
     with MySQLdb.connect(
         config['host'],
@@ -240,15 +245,24 @@ if __name__ == '__main__':
     PARSER.add_argument('-d', '--date', type=str)
     PARSER.add_argument('-w', '--wicks', type=str)
     PARSER.add_argument('-b', '--book', action='store_true')
+    PARSER.add_argument('-t', '--tweeted', action='store_true')
     ARGS = PARSER.parse_args()
     GREG_DATE = get_date(ARGS.date)
 
     CONFIG = load_config()
     if ARGS.wicks:
-        PLAY_LIST = load_from_db(CONFIG['db'], wicks=ARGS.wicks)
+        PLAY_LIST = load_from_db(
+            CONFIG['db'],
+            wicks=ARGS.wicks,
+            tweeted=ARGS.tweeted
+            )
         LOOKUP_TERM = ARGS.wicks
     else:
-        PLAY_LIST = load_from_db(CONFIG['db'], greg_date=GREG_DATE)
+        PLAY_LIST = load_from_db(
+            CONFIG['db'],
+            greg_date=GREG_DATE,
+            tweeted=ARGS.tweeted
+            )
         LOOKUP_TERM = GREG_DATE.strftime(DATE_FORMAT)
 
     if not PLAY_LIST:

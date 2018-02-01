@@ -3,8 +3,8 @@ Play - class for storing information about plays
 """
 
 TEMPLATE = {
-    'basic': '{0.title},{0.author_string} {0.gaf},{0.music_string} a débuté #CeJourLà {0.date} {0.theater_string}. Wicks nº. {0.wicks}.',
-    'short': '{0.title},{0.author_string} {0.gaf},{0.music_string} a débuté #CeJourLà {0.date} {0.theater_string}. Wicks nº. {0.wicks}.',
+    'basic': '{0.title},{0.author_string}{0.gaf}{0.music_string} a débuté #CeJourLà {0.date} {0.theater_string}. Wicks nº. {0.wicks}.',
+    'short': '{0.title},{0.author_string}{0.gaf}{0.music_string} a débuté #CeJourLà {0.date} {0.theater_string}. Wicks nº. {0.wicks}.',
     'shorter': '{0.title},{0.author} #CeJourLà {0.date} {0.theater_code}. Wicks nº. {0.wicks}.'
     }
 
@@ -48,15 +48,14 @@ def musique_de(name):
 class Play:
     """
     """
-    def __init__(self, row=None, date=None, genre=None):
+    def __init__(self, row=None, date=None, genre=''):
         if row:
             self.id = row['id']
             self.wicks = row['wicks']
             self.title = row.get('title')
             self.author = row.get('author')
-            self.genre = row.get('genre')
             self.acts = row.get('acts')
-            self.format = row.get('format')
+            self.play_format = row.get('format')
             self.genre = genre
             self.abbrev_genre = row.get('genre')
             self.music = row.get('music')
@@ -73,28 +72,30 @@ class Play:
         """
         Generate genre and number of acts
         """
-        gaf = self.genre
-        if self.format:
-            format = EXPAND_FORMAT['pluriel'][self.format]
+        if self.play_format:
+            play_format = EXPAND_FORMAT['pluriel'][self.play_format]
             if self.acts == 1:
-                format = EXPAND_FORMAT['singulier'][self.format]
-            gaf = "{} en {} {}".format(self.genre, self.acts, format)
+                play_format = EXPAND_FORMAT['singulier'][self.play_format]
+            return " {} en {} {},".format(self.genre, self.acts, play_format)
+        elif self.genre:
+            return " {},".format(self.genre)
 
-        return gaf
+        return ''
 
     def short_genre_phrase(self):
         """
         Generate short genre phrase
         """
-        sgaf = self.abbrev_genre
-        if self.format:
-            sgaf = "{} en {} {}".format(
+        if self.play_format:
+            return " {} en {} {},".format(
                 self.abbrev_genre,
                 self.acts,
-                self.format
+                self.play_format
                 )
+        elif self.abbrev_genre:
+            return " {},".format(self.abbrev_genre)
 
-        return sgaf
+        return ''
 
     def __repr__(self):
         """
