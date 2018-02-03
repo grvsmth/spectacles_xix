@@ -250,11 +250,22 @@ def send_tweet(config, message, title_image):
 
     image_id = None
     if title_image:
-        image_res = twapi.media.upload(media=title_image)
+        twupload = Twitter(
+            domain='upload.twitter.com',
+            auth=OAuth(
+                config['token'],
+                config['token_secret'],
+                config['consumer_key'],
+                config['consumer_secret']
+                )
+            )
+        image_res = twupload.media.upload(media=title_image)
         if image_res:
             image_id = image_res['media_id_string']
+            status = twapi.statuses.update(status=message, media_ids=image_id)
+            return status
 
-    status = twapi.statuses.update(status=message, media_ids=image_id)
+    status = twapi.statuses.update(status=message)
 
     return status
 
@@ -267,6 +278,7 @@ if __name__ == '__main__':
     PARSER.add_argument('-w', '--wicks', type=str)
     PARSER.add_argument('-b', '--book', action='store_true')
     PARSER.add_argument('-t', '--tweeted', action='store_true')
+    PARSER.add_argument('-f', '--force', action='store_true')
     ARGS = PARSER.parse_args()
     GREG_DATE = get_date(ARGS.date)
 
@@ -291,7 +303,7 @@ if __name__ == '__main__':
         print("No plays for {}".format(LOOKUP_TERM))
         exit(0)
 
-    if not ARGS.no_tweet and not time_to_tweet(len(PLAY_LIST)):
+    if not ARGS.no_tweet and not ARGS.force and not time_to_tweet(len(PLAY_LIST)):
         exit(0)
 
     GENRE = expand_abbreviation(CONFIG['db'], PLAY_LIST[0]['genre'])
@@ -300,6 +312,7 @@ if __name__ == '__main__':
 
     BOOK_IMAGE = None
     if ARGS.book:
+        print("Checking Google books API for {}".format(PLAY.title))
         books_api = check_books.get_api(CONFIG['path']['google_service_account'])
         book_result = check_books.search_api(
             books_api,
