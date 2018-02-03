@@ -1,7 +1,10 @@
 #from pathlib import Path
+from io import BytesIO
 
 from google.oauth2 import service_account
 import googleapiclient.discovery
+
+from requests import get
 
 SCOPES = ['https://www.googleapis.com/auth/books']
 
@@ -21,3 +24,7 @@ def search_api(api, term):
     if vol_list['totalItems'] > 0:
         return vol_list['items'][0]
     return None
+
+def fetch_file(url):
+    file_res = get(url)
+    return BytesIO(file_res.content)

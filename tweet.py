@@ -69,7 +69,7 @@ def load_from_db(config, greg_date=None, wicks=None, tweeted=False):
         lookup_term = greg_date.isoformat()
 
     playq = """SELECT id, wicks, title, author, genre, acts, format,
-    music, spectacle_play.theater_code, theater_name, rev_date
+    music, spectacle_play.theater_code, theater_name, greg_date, rev_date
     FROM spectacle_play RIGHT JOIN spectacle_theater USING (theater_code)
     WHERE {}{} = %s
     """.format(where_tweeted[tweeted], lookup_col)
@@ -224,7 +224,7 @@ def time_to_tweet(play_count):
 
     return False
 
-def send_tweet(config, message):
+def send_tweet(config, message, title_image):
     """
     Send the tweet
     """
@@ -234,7 +234,28 @@ def send_tweet(config, message):
         config['consumer_key'],
         config['consumer_secret']
         ))
-    status = twapi.statuses.update(status=message)
+
+    # Send images along with your tweets:
+    # - first just read images from the web or from files the regular way:
+    # with open("example.png", "rb") as imagefile:
+    # imagedata = imagefile.read()
+    # - then upload medias one by one on Twitter's dedicated server
+    #   and collect each one's id:
+    # t_upload = Twitter(domain='upload.twitter.com',
+    # auth=OAuth(token, token_secret, consumer_key, consumer_secret))
+    # id_img1 = t_upload.media.upload(media=imagedata)["media_id_string"]
+    # id_img2 = t_upload.media.upload(media=imagedata)["media_id_string"]
+    # - finally send your tweet with the list of media ids:
+    # t.statuses.update(status="PTT ★", media_ids=",".join([id_img1, id_img2]))
+
+    image_id = None
+    if title_image:
+        image_res = twapi.media.upload(media=title_image)
+        if image_res:
+            image_id = image_res['media_id_string']
+
+    status = twapi.statuses.update(status=message, media_ids=image_id)
+
     return status
 
 if __name__ == '__main__':
@@ -257,6 +278,7 @@ if __name__ == '__main__':
             tweeted=ARGS.tweeted
             )
         LOOKUP_TERM = ARGS.wicks
+        GREG_DATE = PLAY_LIST[0].get('greg_date', GREG_DATE)
     else:
         PLAY_LIST = load_from_db(
             CONFIG['db'],
@@ -276,6 +298,7 @@ if __name__ == '__main__':
     PLAY = Play(PLAY_LIST[0], GREG_DATE.strftime(DATE_FORMAT), GENRE)
     print(PLAY)
 
+    BOOK_IMAGE = None
     if ARGS.book:
         books_api = check_books.get_api(CONFIG['path']['google_service_account'])
         book_result = check_books.search_api(
@@ -286,12 +309,13 @@ if __name__ == '__main__':
             thumbnail_url = book_result['volumeInfo']['imageLinks'].get('thumbnail')
             thumbnail_url = thumbnail_url.replace('zoom=1', 'zoom=3')
             thumbnail_url = thumbnail_url.replace('&edge=curl', '')
+            BOOK_IMAGE = check_books.fetch_file(thumbnail_url)
             print(thumbnail_url)
 
     if ARGS.no_tweet:
         exit(0)
 
-    STATUS = send_tweet(CONFIG['twitter'], str(PLAY))
+    STATUS = send_tweet(CONFIG['twitter'], str(PLAY), BOOK_IMAGE)
     if 'id' in STATUS:
         print("Sent tweet ID# {}".format(STATUS['id']))
         tweet_db(CONFIG['db'], PLAY_LIST[0]['id'])
