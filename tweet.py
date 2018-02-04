@@ -21,7 +21,7 @@ import check_books
 
 # TODO package
 
-# TODO look up book image
+# TODO remove #CeJourLà if it's not OTD
 
 # TODO deal with extra plays that were dumped on the first of the month/year;
 # this should be done by January 1, 2019
@@ -32,6 +32,8 @@ CONFIG_PATH = 'spectacles_xix/config'
 TIMEZONE = 'Europe/Paris'
 DATE_FORMAT = "%A le %d %B %Y"
 locale.setlocale(locale.LC_TIME, "fr_FR")
+
+LOCAL_NOW = pytz.timezone(TIMEZONE).localize(datetime.now())
 
 def load_config():
     """
@@ -185,23 +187,15 @@ def get_date(date_string=None):
     if date_string:
         our_date = datetime.strptime(date_string, "%d-%m-%Y").date()
     else:
-        local_now = pytz.timezone(TIMEZONE).localize(datetime.now())
-        our_date = local_now.date() + relativedelta.relativedelta(years=-200)
+        our_date = LOCAL_NOW.date() + relativedelta.relativedelta(years=-200)
 
     return our_date
-
-def get_hour():
-    """
-    Get the hour in our timezone
-    """
-    local_now = pytz.timezone(TIMEZONE).localize(datetime.now())
-    return local_now.hour
 
 def time_to_tweet(play_count):
     """
     Determine whether this is a good time to tweet
     """
-    this_hour = get_hour()
+    this_hour = LOCAL_NOW.hour
     hours_remaining = 23 - this_hour
     hours_per_tweet = hours_remaining / play_count
     print("{} hours remaining / {} plays = {}".format(
@@ -290,7 +284,8 @@ if __name__ == '__main__':
             tweeted=ARGS.tweeted
             )
         LOOKUP_TERM = ARGS.wicks
-        GREG_DATE = PLAY_LIST[0].get('greg_date', GREG_DATE)
+        if PLAY_LIST:
+            GREG_DATE = PLAY_LIST[0].get('greg_date', GREG_DATE)
     else:
         PLAY_LIST = load_from_db(
             CONFIG['db'],

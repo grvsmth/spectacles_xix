@@ -3,9 +3,9 @@ Play - class for storing information about plays
 """
 
 TEMPLATE = {
-    'basic': '{0.title},{0.author_string}{0.gaf}{0.music_string} a débuté #CeJourLà {0.date} {0.theater_string}. Wicks nº. {0.wicks}.',
-    'short': '{0.title},{0.author_string}{0.gaf}{0.music_string} a débuté #CeJourLà {0.date} {0.theater_string}. Wicks nº. {0.wicks}.',
-    'shorter': '{0.title},{0.author} #CeJourLà {0.date} {0.theater_code}. Wicks nº. {0.wicks}.'
+    'basic': '{0.title},{0.author_string}{0.gaf}{0.music_string} a débuté{0.ce_jour_la} {0.date} {0.theater_string}. Wicks nº. {0.wicks}.',
+    'short': '{0.title},{0.author_string}{0.gaf}{0.music_string} a débuté{0.ce_jour_la} {0.date} {0.theater_string}. Wicks nº. {0.wicks}.',
+    'shorter': '{0.title},{0.author}{0.ce_jour_la} {0.date} {0.theater_code}. Wicks nº. {0.wicks}.'
     }
 
 EXPAND_FORMAT = {
@@ -67,6 +67,15 @@ class Play:
             self.author_string = par_auteur(row.get('author'))
             self.gaf = self.genre_phrase()
             self.date = date
+            self.ce_jour_la = ''
+
+    def set_today(self, today):
+        """
+        Tell the object what today is, so it can determine whether to tweet
+        #CeJourLà
+        """
+        if self.date == today:
+            self.ce_jour_la = ' #CeJourLà'
 
     def genre_phrase(self):
         """
