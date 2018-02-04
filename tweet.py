@@ -21,12 +21,8 @@ import check_books
 
 # TODO package
 
-# TODO remove #CeJourLà if it's not OTD
-
 # TODO deal with extra plays that were dumped on the first of the month/year;
 # this should be done by January 1, 2019
-
-# TODO daylight savings time
 
 CONFIG_PATH = 'spectacles_xix/config'
 TIMEZONE = 'Europe/Paris'
@@ -260,7 +256,6 @@ def send_tweet(config, message, title_image):
             return status
 
     status = twapi.statuses.update(status=message)
-
     return status
 
 if __name__ == '__main__':
@@ -306,6 +301,7 @@ if __name__ == '__main__':
     print(PLAY)
 
     BOOK_IMAGE = None
+    BOOK_LINK = ''
     if ARGS.book:
         print("Checking Google books API for {}".format(PLAY.title))
         books_api = check_books.get_api(CONFIG['path']['google_service_account'])
@@ -315,9 +311,8 @@ if __name__ == '__main__':
             )
         if book_result:
             thumbnail_url = book_result['volumeInfo']['imageLinks'].get('thumbnail')
-            thumbnail_url = thumbnail_url.replace('zoom=1', 'zoom=3')
-            thumbnail_url = thumbnail_url.replace('&edge=curl', '')
             BOOK_IMAGE = check_books.fetch_file(thumbnail_url)
+            print(book_result['volumeInfo']['previewLink'])
             print(thumbnail_url)
 
     if ARGS.no_tweet:

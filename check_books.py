@@ -1,5 +1,3 @@
-#from pathlib import Path
-from io import BytesIO
 
 from google.oauth2 import service_account
 import googleapiclient.discovery
@@ -29,6 +27,21 @@ def search_api(api, term):
         return vol_list['items'][0]
     return None
 
+def munge_image_link(in_link):
+    """
+    Transform book image link
+    """
+    if not in_link:
+        return in_link
+
+    out_link = in_link.replace('zoom=1', 'zoom=3')
+    out_link = in_link.replace('&edge=curl', '')
+    return out_link
+
 def fetch_file(url):
-    file_res = get(url)
+    """
+    Retrieve file and return contents
+    """
+    better_link = munge_image_link(url)
+    file_res = get(better_link)
     return file_res.content
