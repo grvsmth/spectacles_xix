@@ -1,3 +1,8 @@
+"""
+Functions for retrieving information from the Google Books API
+"""
+
+import re
 
 from google.oauth2 import service_account
 import googleapiclient.discovery
@@ -6,6 +11,8 @@ import googleapiclient.errors
 from requests import get
 
 SCOPES = ['https://www.googleapis.com/auth/books']
+
+QUERY_RE = re.compile(r'&dq=.+?(?=&)')
 
 def get_api(config_fn):
     credentials = service_account.Credentials.from_service_account_file(
@@ -35,7 +42,17 @@ def munge_image_link(in_link):
         return in_link
 
     out_link = in_link.replace('zoom=1', 'zoom=3')
-    out_link = in_link.replace('&edge=curl', '')
+    out_link = out_link.replace('&edge=curl', '')
+    return out_link
+
+def munge_book_link(in_link):
+    """
+    Transform book image link
+    """
+    if not in_link:
+        return in_link
+
+    out_link = QUERY_RE.sub('', in_link)
     return out_link
 
 def fetch_file(url):

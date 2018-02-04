@@ -312,13 +312,14 @@ if __name__ == '__main__':
         if book_result:
             thumbnail_url = book_result['volumeInfo']['imageLinks'].get('thumbnail')
             BOOK_IMAGE = check_books.fetch_file(thumbnail_url)
-            print(book_result['volumeInfo']['previewLink'])
-            print(thumbnail_url)
+            BOOK_LINK = check_books.munge_book_link(
+                book_result['volumeInfo']['previewLink']
+                )
 
     if ARGS.no_tweet:
         exit(0)
 
-    STATUS = send_tweet(CONFIG['twitter'], str(PLAY), BOOK_IMAGE)
+    STATUS = send_tweet(CONFIG['twitter'], str(PLAY) + ' ' + BOOK_LINK, BOOK_IMAGE)
     if 'id' in STATUS:
         print("Sent tweet ID# {}".format(STATUS['id']))
         tweet_db(CONFIG['db'], PLAY_LIST[0]['id'])
