@@ -21,8 +21,11 @@ def au_theater(name):
         return ''
     loc = {
         'Théâtre': 'au ',
+        'Th.': 'au ',
         'Académie': "à l'",
         'Cirque': 'au ',
+        'Fêtes': 'aux ',
+        'Cour': 'à la ',
         'Opéra-Comique-Nationale': "à l'"
         }
     first_word = name.split(' ')[0]
@@ -113,7 +116,7 @@ class Play:
         Generate description for tweet
         """
         if not self.theater_name:
-            self.theater_string = 'à {}'.format(self.theater_code)
+            self.theater_string = au_theater(self.theater_code)
         self.description = TEMPLATE['basic'].format(self)
         if len(self.description) > 280:
             print("Description for play {} is too long ({} characters)".format(
