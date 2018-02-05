@@ -17,6 +17,8 @@ def au_theater(name):
     """
     Add a preposition and article to a theater name to make it locative
     """
+    if not name:
+        return ''
     loc = {
         'Théâtre': 'au ',
         'Académie': "à l'",
@@ -110,6 +112,8 @@ class Play:
         """
         Generate description for tweet
         """
+        if not self.theater_name:
+            self.theater_string = 'à {}'.format(self.theater_code)
         self.description = TEMPLATE['basic'].format(self)
         if len(self.description) > 280:
             print("Description for play {} is too long ({} characters)".format(

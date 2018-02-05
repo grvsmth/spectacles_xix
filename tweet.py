@@ -21,6 +21,8 @@ import check_books
 
 # TODO package
 
+# TODO convert check_books to a class
+
 # TODO deal with extra plays that were dumped on the first of the month/year;
 # this should be done by January 1, 2019
 
@@ -45,7 +47,7 @@ def load_config():
 
     return config
 
-def load_from_db(config, greg_date=None, wicks=None, tweeted=False):
+def load_from_db(config, greg_date=None, wicks=None, tweeted=False, limit=None):
     """
     Load data from db
     """
@@ -66,11 +68,15 @@ def load_from_db(config, greg_date=None, wicks=None, tweeted=False):
         lookup_col = 'greg_date'
         lookup_term = greg_date.isoformat()
 
+    limit_string = ''
+    if limit:
+        limit_string = ' LIMIT {}'.format(limit)
+
     playq = """SELECT id, wicks, title, author, genre, acts, format,
     music, spectacle_play.theater_code, theater_name, greg_date, rev_date
-    FROM spectacle_play RIGHT JOIN spectacle_theater USING (theater_code)
-    WHERE {}{} = %s
-    """.format(where_tweeted[tweeted], lookup_col)
+    FROM spectacle_play LEFT JOIN spectacle_theater USING (theater_code)
+    WHERE {}{} = %s{}
+    """.format(where_tweeted[tweeted], lookup_col, limit_string)
 
     with MySQLdb.connect(
         config['host'],
@@ -225,19 +231,6 @@ def send_tweet(config, message, title_image):
         config['consumer_secret']
         ))
 
-    # Send images along with your tweets:
-    # - first just read images from the web or from files the regular way:
-    # with open("example.png", "rb") as imagefile:
-    # imagedata = imagefile.read()
-    # - then upload medias one by one on Twitter's dedicated server
-    #   and collect each one's id:
-    # t_upload = Twitter(domain='upload.twitter.com',
-    # auth=OAuth(token, token_secret, consumer_key, consumer_secret))
-    # id_img1 = t_upload.media.upload(media=imagedata)["media_id_string"]
-    # id_img2 = t_upload.media.upload(media=imagedata)["media_id_string"]
-    # - finally send your tweet with the list of media ids:
-    # t.statuses.update(status="PTT ★", media_ids=",".join([id_img1, id_img2]))
-
     image_id = None
     if title_image:
         twupload = Twitter(
@@ -291,7 +284,22 @@ if __name__ == '__main__':
 
     if not PLAY_LIST:
         print("No plays for {}".format(LOOKUP_TERM))
-        exit(0)
+
+        if ARGS.wicks:
+            exit(0)
+
+        # Look for one play from the first of the month
+        FIRST_OF_MONTH = GREG_DATE.replace(day=1)
+        print("Checking for plays on {}".format(FIRST_OF_MONTH))
+        PLAY_LIST = load_from_db(
+            CONFIG['db'],
+            greg_date=FIRST_OF_MONTH,
+            tweeted=ARGS.tweeted,
+            limit=1
+            )
+        if not PLAY_LIST:
+            print("No plays for {}".format(FIRST_OF_MONTH))
+            exit(0)
 
     if not ARGS.no_tweet and not ARGS.force and not time_to_tweet(len(PLAY_LIST)):
         exit(0)
