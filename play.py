@@ -4,7 +4,6 @@ Play - class for storing information about plays
 
 TEMPLATE = {
     'basic': '{0.title},{0.author_string}{0.gaf}{0.music_string} a débuté{0.ce_jour_la} {0.date} {0.theater_string}. Wicks nº. {0.wicks}.',
-    'short': '{0.title},{0.author_string}{0.gaf}{0.music_string} a débuté{0.ce_jour_la} {0.date} {0.theater_string}. Wicks nº. {0.wicks}.',
     'shorter': '{0.title},{0.author}{0.ce_jour_la} {0.date} {0.theater_code}. Wicks nº. {0.wicks}.'
     }
 
@@ -124,7 +123,7 @@ class Play:
                 len(self.description)
                 ))
             self.sgaf = self.short_genre_phrase()
-            self.description = TEMPLATE['short'].format(self)
+            self.description = TEMPLATE['basic'].format(self)
         if len(self.description) > 280:
             print("Description for play {} is STILL too long ({} characters)".format(
                 self.id,
