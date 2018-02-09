@@ -1,6 +1,6 @@
 import unittest
 
-from play import au_theater, par_auteur
+from play import au_theater, par_auteur, musique_de
 
 class TestMunge(unittest.TestCase):
 
@@ -26,6 +26,18 @@ class TestMunge(unittest.TestCase):
         in_text = None
         target_text = ''
         out_text = par_auteur(in_text)
+        self.assertEqual(out_text, target_text)
+
+    def test_musique_de(self):
+        in_text = 'Soleil'
+        target_text = ' Musique de Soleil,'
+        out_text = musique_de(in_text)
+        self.assertEqual(out_text, target_text)
+
+    def test_musique_de_blank(self):
+        in_text = None
+        target_text = ''
+        out_text = musique_de(in_text)
         self.assertEqual(out_text, target_text)
 
 if __name__ == '__main__':
