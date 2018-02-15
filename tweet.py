@@ -304,7 +304,8 @@ if __name__ == '__main__':
         exit(0)
 
     GENRE = expand_abbreviation(CONFIG['db'], PLAY_LIST[0]['genre'])
-    PLAY = Play(PLAY_LIST[0], GREG_DATE.strftime(DATE_FORMAT), GENRE)
+    PLAY = Play()
+    PLAY.from_dict(PLAY_LIST[0], GREG_DATE.strftime(DATE_FORMAT), GENRE)
     print(PLAY)
 
     BOOK_IMAGE = None

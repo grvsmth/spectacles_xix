@@ -52,26 +52,45 @@ def musique_de(name):
 class Play:
     """
     """
-    def __init__(self, row=None, date=None, genre=''):
-        if row:
-            self.id = row['id']
-            self.wicks = row['wicks']
-            self.title = row.get('title')
-            self.author = row.get('author')
-            self.acts = row.get('acts')
-            self.play_format = row.get('format')
-            self.genre = genre
-            self.abbrev_genre = row.get('genre')
-            self.music = row.get('music')
-            self.rev_date = row.get('rev_date')
-            self.theater_name = row.get('theater_name')
-            self.theater_code = row.get('theater_code')
-            self.theater_string = au_theater(row.get('theater_name'))
-            self.music_string = musique_de(row.get('music'))
-            self.author_string = par_auteur(row.get('author'))
-            self.gaf = self.genre_phrase()
-            self.date = date
-            self.ce_jour_la = ''
+    def __init__(self):
+        self.id = 0
+        self.wicks = ''
+        self.title = ''
+        self.author = ''
+        self.acts = ''
+        self.play_format = ''
+        self.genre = ''
+        self.abbrev_genre = ''
+        self.music = ''
+        self.rev_date = ''
+        self.theater_name = ''
+        self.theater_code = ''
+        self.theater_string = ''
+        self.music_string = ''
+        self.author_string = ''
+        self.gaf = ''
+        self.date = None
+        self.ce_jour_la = ''
+
+    def from_dict(self, row, date=None, genre=''):
+        self.id = row['id']
+        self.wicks = row['wicks']
+        self.title = row.get('title')
+        self.author = row.get('author')
+        self.acts = row.get('acts')
+        self.play_format = row.get('format')
+        self.genre = genre
+        self.abbrev_genre = row.get('genre')
+        self.music = row.get('music')
+        self.rev_date = row.get('rev_date')
+        self.theater_name = row.get('theater_name')
+        self.theater_code = row.get('theater_code')
+        self.theater_string = au_theater(row.get('theater_name'))
+        self.music_string = musique_de(row.get('music'))
+        self.author_string = par_auteur(row.get('author'))
+        self.gaf = self.genre_phrase()
+        self.date = date
+        self.ce_jour_la = ''
 
     def set_today(self, today):
         """
