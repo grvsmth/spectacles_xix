@@ -196,6 +196,10 @@ def time_to_tweet(play_count):
     """
     Determine whether this is a good time to tweet
     """
+    if not play_count:
+        print("No plays: {}".format(play_count))
+        return False
+
     this_hour = LOCAL_NOW.hour
     hours_remaining = 23 - this_hour
     hours_per_tweet = hours_remaining / play_count
