@@ -45,7 +45,7 @@ def musique_de(name):
     """
     music_phrase = ''
     if name:
-        music_phrase = " musique de {}".format(name)
+        music_phrase = " musique de {},".format(name)
 
     return music_phrase
 
@@ -60,43 +60,45 @@ class Play:
         self.acts = ''
         self.play_format = ''
         self.genre = ''
-        self.abbrev_genre = ''
         self.music = ''
         self.rev_date = ''
         self.theater_name = ''
         self.theater_code = ''
-        self.theater_string = ''
-        self.music_string = ''
-        self.author_string = ''
-        self.gaf = ''
-        self.date = None
-        self.ce_jour_la = ''
 
-    def from_dict(self, row, date=None, genre=''):
+    def from_dict(self, row):
         self.id = row['id']
         self.wicks = row['wicks']
         self.title = row.get('title')
         self.author = row.get('author')
         self.acts = row.get('acts')
         self.play_format = row.get('format')
-        self.genre = genre
-        self.abbrev_genre = row.get('genre')
+        self.genre = row.get('genre')
         self.music = row.get('music')
         self.rev_date = row.get('rev_date')
         self.theater_name = row.get('theater_name')
         self.theater_code = row.get('theater_code')
-        self.theater_string = au_theater(row.get('theater_name'))
-        self.music_string = musique_de(row.get('music'))
-        self.author_string = par_auteur(row.get('author'))
-        self.gaf = self.genre_phrase()
+        self.greg_date = row.get('greg_date')
+
+
+    def set_expanded_genre(self, expanded_genre):
+        """
+        Set the genre
+        """
+        self.expanded_genre = expanded_genre
+
+
+    def set_date(self, date):
+        """
+        Set the date of the production
+        """
         self.date = date
-        self.ce_jour_la = ''
 
     def set_today(self, today):
         """
         Tell the object what today is, so it can determine whether to tweet
         #CeJourLà
         """
+        self.ce_jour_la = ''
         if self.date == today:
             self.ce_jour_la = ' #CeJourLà'
 
@@ -114,6 +116,7 @@ class Play:
 
         return ''
 
+
     def short_genre_phrase(self):
         """
         Generate short genre phrase
@@ -128,6 +131,17 @@ class Play:
             return " {},".format(self.abbrev_genre)
 
         return ''
+
+
+    def make_phrases(self):
+        """
+        Expand theater, music and author into tweet-friendly strings
+        """
+        self.theater_string = au_theater(self.theater_name)
+        self.music_string = musique_de(self.music)
+        self.author_string = par_auteur(self.author)
+        self.gaf = self.genre_phrase()
+
 
     def __repr__(self):
         """

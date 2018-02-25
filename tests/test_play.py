@@ -1,6 +1,23 @@
+from copy import deepcopy
 import unittest
 
-from play import au_theater, par_auteur, musique_de
+from play import au_theater, par_auteur, musique_de, Play
+
+TEST_DICT = {
+    'id': 999,
+    'wicks': 9999,
+    'author': 'Foo & Bar',
+    'title': 'Arlequin le Baz',
+    'acts': '3',
+    'format': 'tabl',
+    'music': None,
+    'genre': 'op.-com',
+    'theater_code': 'TMA',
+    'theater_name': '',
+    'greg_date': '01-01-1818',
+    'rev_date': None
+    }
+
 
 class TestMunge(unittest.TestCase):
 
@@ -30,7 +47,7 @@ class TestMunge(unittest.TestCase):
 
     def test_musique_de(self):
         in_text = 'Soleil'
-        target_text = ' Musique de Soleil,'
+        target_text = ' musique de Soleil,'
         out_text = musique_de(in_text)
         self.assertEqual(out_text, target_text)
 
@@ -39,6 +56,14 @@ class TestMunge(unittest.TestCase):
         target_text = ''
         out_text = musique_de(in_text)
         self.assertEqual(out_text, target_text)
+
+    def test_from_dict(self):
+        in_dict = TEST_DICT
+        out_dict = deepcopy(TEST_DICT)
+        out_dict['play_format'] = out_dict.pop('format')
+        play = Play()
+        play.from_dict(in_dict)
+        self.assertDictEqual(play.__dict__, out_dict)
 
 if __name__ == '__main__':
     unittest.main()

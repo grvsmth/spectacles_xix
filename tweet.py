@@ -307,9 +307,13 @@ if __name__ == '__main__':
     if not ARGS.no_tweet and not ARGS.force and not time_to_tweet(len(PLAY_LIST)):
         exit(0)
 
-    GENRE = expand_abbreviation(CONFIG['db'], PLAY_LIST[0]['genre'])
+    EXPANDED_GENRE = expand_abbreviation(CONFIG['db'], PLAY_LIST[0]['genre'])
     PLAY = Play()
-    PLAY.from_dict(PLAY_LIST[0], GREG_DATE.strftime(DATE_FORMAT), GENRE)
+    PLAY.from_dict(PLAY_LIST[0])
+    PLAY.set_date(GREG_DATE.strftime(DATE_FORMAT))
+    PLAY.set_today(get_date())
+    PLAY.set_expanded_genre(EXPANDED_GENRE)
+    PLAY.make_phrases()
     print(PLAY)
 
     BOOK_IMAGE = None
