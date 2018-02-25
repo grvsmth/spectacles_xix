@@ -1,16 +1,21 @@
 """
 Play - class for storing information about plays
 """
+import locale
 
 TEMPLATE = {
-    'basic': '{0.title},{0.author_string}{0.gaf}{0.music_string} a débuté{0.ce_jour_la} {0.date} {0.theater_string}. Wicks nº. {0.wicks}.',
-    'shorter': '{0.title},{0.author}{0.ce_jour_la} {0.date} {0.theater_code}. Wicks nº. {0.wicks}.'
+    'basic': '{0.title},{0.author_string}{0.gaf}{0.music_string} a débuté{0.ce_jour_la} {0.date_string} {0.theater_string}. Wicks nº. {0.wicks}.',
+    'shorter': '{0.title},{0.author}{0.ce_jour_la} {0.date_string} {0.theater_code}. Wicks nº. {0.wicks}.'
     }
 
 EXPAND_FORMAT = {
     'singulier': {'a': 'acte', 'tabl': 'tableau'},
     'pluriel': {'a': 'actes', 'tabl': 'tableaux'}
 }
+
+TIMEZONE = 'Europe/Paris'
+DATE_FORMAT = "%A le %d %B %Y"
+locale.setlocale(locale.LC_TIME, "fr_FR")
 
 def au_theater(name):
     """
@@ -64,6 +69,7 @@ class Play:
         self.rev_date = ''
         self.theater_name = ''
         self.theater_code = ''
+        self.greg_date = None
 
     def from_dict(self, row):
         self.id = row['id']
@@ -79,7 +85,6 @@ class Play:
         self.theater_code = row.get('theater_code')
         self.greg_date = row.get('greg_date')
 
-
     def set_expanded_genre(self, expanded_genre):
         """
         Set the genre
@@ -87,19 +92,13 @@ class Play:
         self.expanded_genre = expanded_genre
 
 
-    def set_date(self, date):
-        """
-        Set the date of the production
-        """
-        self.date = date
-
     def set_today(self, today):
         """
         Tell the object what today is, so it can determine whether to tweet
         #CeJourLà
         """
         self.ce_jour_la = ''
-        if self.date == today:
+        if self.greg_date == today:
             self.ce_jour_la = ' #CeJourLà'
 
     def genre_phrase(self):
@@ -137,6 +136,7 @@ class Play:
         """
         Expand theater, music and author into tweet-friendly strings
         """
+        self.date_string = self.greg_date.strftime(DATE_FORMAT)
         self.theater_string = au_theater(self.theater_name)
         self.music_string = musique_de(self.music)
         self.author_string = par_auteur(self.author)

@@ -265,7 +265,7 @@ if __name__ == '__main__':
     PARSER.add_argument('-t', '--tweeted', action='store_true')
     PARSER.add_argument('-f', '--force', action='store_true')
     ARGS = PARSER.parse_args()
-    GREG_DATE = get_date(ARGS.date)
+    TODAY_DATE = get_date(ARGS.date)
 
     CONFIG = load_config()
     if ARGS.wicks:
@@ -275,15 +275,13 @@ if __name__ == '__main__':
             tweeted=ARGS.tweeted
             )
         LOOKUP_TERM = ARGS.wicks
-        if PLAY_LIST:
-            GREG_DATE = PLAY_LIST[0].get('greg_date', GREG_DATE)
     else:
         PLAY_LIST = load_from_db(
             CONFIG['db'],
-            greg_date=GREG_DATE,
+            greg_date=TODAY_DATE,
             tweeted=ARGS.tweeted
             )
-        LOOKUP_TERM = GREG_DATE.strftime(DATE_FORMAT)
+        LOOKUP_TERM = TODAY_DATE.strftime(DATE_FORMAT)
 
     if not PLAY_LIST:
         print("No plays for {}".format(LOOKUP_TERM))
@@ -292,16 +290,16 @@ if __name__ == '__main__':
             exit(0)
 
         # Look for one play from the first of the month
-        FIRST_OF_MONTH = GREG_DATE.replace(day=1)
-        print("Checking for plays on {}".format(FIRST_OF_MONTH))
+        PLAY_DATE = TODAY_DATE.replace(day=1)
+        print("Checking for plays on {}".format(PLAY_DATE))
         PLAY_LIST = load_from_db(
             CONFIG['db'],
-            greg_date=FIRST_OF_MONTH,
+            greg_date=PLAY_DATE,
             tweeted=ARGS.tweeted,
             limit=1
             )
         if not PLAY_LIST:
-            print("No plays for {}".format(FIRST_OF_MONTH))
+            print("No plays for {}".format(PLAY_DATE))
             exit(0)
 
     if not ARGS.no_tweet and not ARGS.force and not time_to_tweet(len(PLAY_LIST)):
@@ -310,7 +308,6 @@ if __name__ == '__main__':
     EXPANDED_GENRE = expand_abbreviation(CONFIG['db'], PLAY_LIST[0]['genre'])
     PLAY = Play()
     PLAY.from_dict(PLAY_LIST[0])
-    PLAY.set_date(GREG_DATE.strftime(DATE_FORMAT))
     PLAY.set_today(get_date())
     PLAY.set_expanded_genre(EXPANDED_GENRE)
     PLAY.make_phrases()
