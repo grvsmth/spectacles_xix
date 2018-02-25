@@ -109,9 +109,9 @@ class Play:
             play_format = EXPAND_FORMAT['pluriel'][self.play_format]
             if self.acts == 1:
                 play_format = EXPAND_FORMAT['singulier'][self.play_format]
-            return " {} en {} {},".format(self.genre, self.acts, play_format)
-        elif self.genre:
-            return " {},".format(self.genre)
+            return " {} en {} {},".format(self.expanded_genre, self.acts, play_format)
+        elif self.expanded_genre:
+            return " {},".format(self.expanded_genre)
 
         return ''
 
@@ -122,12 +122,12 @@ class Play:
         """
         if self.play_format:
             return " {} en {} {},".format(
-                self.abbrev_genre,
+                self.genre,
                 self.acts,
                 self.play_format
                 )
-        elif self.abbrev_genre:
-            return " {},".format(self.abbrev_genre)
+        elif self.genre:
+            return " {},".format(self.genre)
 
         return ''
 
