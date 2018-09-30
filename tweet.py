@@ -306,8 +306,7 @@ if __name__ == '__main__':
         exit(0)
 
     EXPANDED_GENRE = expand_abbreviation(CONFIG['db'], PLAY_LIST[0]['genre'])
-    PLAY = Play()
-    PLAY.from_dict(PLAY_LIST[0])
+    PLAY = Play.from_dict(PLAY_LIST[0])
     PLAY.set_today(get_date())
     PLAY.set_expanded_genre(EXPANDED_GENRE)
     PLAY.make_phrases()

@@ -1,5 +1,5 @@
 from copy import deepcopy
-import unittest
+from unittest import TestCase, main
 
 from play import au_theater, par_auteur, musique_de, Play
 
@@ -19,7 +19,7 @@ TEST_DICT = {
     }
 
 
-class TestMunge(unittest.TestCase):
+class TestMunge(TestCase):
 
     def test_au_theater(self):
         in_theater = 'Cirque du Soleil'
@@ -57,13 +57,14 @@ class TestMunge(unittest.TestCase):
         out_text = musique_de(in_text)
         self.assertEqual(out_text, target_text)
 
+class TestPlay(TestCase):
+
     def test_from_dict(self):
         in_dict = TEST_DICT
         out_dict = deepcopy(TEST_DICT)
         out_dict['play_format'] = out_dict.pop('format')
-        play = Play()
-        play.from_dict(in_dict)
+        play = Play.from_dict(in_dict)
         self.assertDictEqual(play.__dict__, out_dict)
 
 if __name__ == '__main__':
-    unittest.main()
+    main()

@@ -56,10 +56,11 @@ def musique_de(name):
 
 class Play:
     """
+    Store information about a play in the corpus
     """
-    def __init__(self):
-        self.id = 0
-        self.wicks = ''
+    def __init__(self, id, wicks):
+        self.id = id
+        self.wicks = wicks
         self.title = ''
         self.author = ''
         self.acts = ''
@@ -71,19 +72,22 @@ class Play:
         self.theater_code = ''
         self.greg_date = None
 
-    def from_dict(self, row):
-        self.id = row['id']
-        self.wicks = row['wicks']
-        self.title = row.get('title')
-        self.author = row.get('author')
-        self.acts = row.get('acts')
-        self.play_format = row.get('format')
-        self.genre = row.get('genre')
-        self.music = row.get('music')
-        self.rev_date = row.get('rev_date')
-        self.theater_name = row.get('theater_name')
-        self.theater_code = row.get('theater_code')
-        self.greg_date = row.get('greg_date')
+    @classmethod
+    def from_dict(cls, row):
+        play = cls(row['id'], row['wicks'])
+
+        play.title = row.get('title')
+        play.author = row.get('author')
+        play.acts = row.get('acts')
+        play.play_format = row.get('format')
+        play.genre = row.get('genre')
+        play.music = row.get('music')
+        play.rev_date = row.get('rev_date')
+        play.theater_name = row.get('theater_name')
+        play.theater_code = row.get('theater_code')
+        play.greg_date = row.get('greg_date')
+
+        return play
 
     def set_expanded_genre(self, expanded_genre):
         """
