@@ -141,7 +141,7 @@ class Play:
             return
 
         if self.play_format:
-            expanded_format = expand_format(self.play_format)
+            expanded_format = expand_format(self.acts, self.play_format)
             self.genre_phrase = GENRE_ACT_FORMAT_TEMPLATE.format(
                 genre, self.acts, expanded_format
                 )

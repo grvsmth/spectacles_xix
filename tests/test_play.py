@@ -1,8 +1,10 @@
 from copy import deepcopy
 from unittest import TestCase, main
+from unittest.mock import patch
 
 from play import(
-    EXPAND_FORMAT, au_theater, expand_format, par_auteur, musique_de, Play
+    EXPAND_FORMAT, GENRE_TEMPLATE, GENRE_ACT_FORMAT_TEMPLATE,
+    au_theater, expand_format, par_auteur, musique_de, Play
     )
 
 TEST_DICT = {
@@ -89,8 +91,13 @@ class TestPlay(TestCase):
 
     def test_from_dict(self):
         in_dict = TEST_DICT
+        additional_fields = {
+            'expanded_genre': '',
+            'genre_phrase': ''
+            }
         out_dict = deepcopy(TEST_DICT)
         out_dict['play_format'] = out_dict.pop('format')
+        out_dict.update(additional_fields)
         play = Play.from_dict(in_dict)
         self.assertDictEqual(play.__dict__, out_dict)
 
@@ -119,12 +126,59 @@ class TestPlay(TestCase):
 
     def test_build_genre_phrase_blank(self):
         self.play.play_format = ''
-        self.play.expanded_genre = ''
-
         target_genre_phrase = ''
+
+        self.play.build_genre_phrase()
+        self.assertEqual(self.play.genre_phrase, target_genre_phrase)
+
+    def test_build_genre_phrase_provided(self):
+        self.play.play_format = ''
+        test_genre = 'foo'
+
+        target_genre_phrase = GENRE_TEMPLATE.format(test_genre)
+        self.play.build_genre_phrase(test_genre)
+
+        self.assertEqual(self.play.genre_phrase, target_genre_phrase)
+
+    @patch('play.expand_format')
+    def test_build_genre_phrase_with_format(self, mock_expand):
+        test_genre = 'foo'
+        test_format = 'a'
+        test_acts = 5
+        test_expanded_format = 'acts'
+
+        self.play.play_format = test_format
+        self.play.play_format = test_format
+        self.play.acts = test_acts
+        self.play.genre = test_genre
+        mock_expand.return_value = test_expanded_format
+
+        target_genre_phrase = GENRE_ACT_FORMAT_TEMPLATE.format(
+            test_genre, test_acts, test_expanded_format
+            )
+
         self.play.build_genre_phrase()
 
         self.assertEqual(self.play.genre_phrase, target_genre_phrase)
+
+    @patch('play.expand_format')
+    def test_build_genre_phrase_provided_with_format(self, mock_expand):
+        test_genre = 'foo'
+        test_format = 'tabl'
+        test_acts = 3
+        test_expanded_format = 'tablooo'
+
+        self.play.play_format = test_format
+        self.play.acts = test_acts
+        mock_expand.return_value = test_expanded_format
+
+        target_genre_phrase = GENRE_ACT_FORMAT_TEMPLATE.format(
+            test_genre, test_acts, test_expanded_format
+            )
+        self.play.build_genre_phrase(test_genre)
+
+        self.assertEqual(self.play.genre_phrase, target_genre_phrase)
+        mock_expand.assert_called_once_with(test_acts, test_format)
 
 
 if __name__ == '__main__':
