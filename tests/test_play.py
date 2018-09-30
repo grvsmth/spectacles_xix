@@ -59,12 +59,47 @@ class TestMunge(TestCase):
 
 class TestPlay(TestCase):
 
+    def setUp(self):
+        self.test_id = 555
+        self.test_wicks = '7777a'
+        self.test_day = TEST_DICT['greg_date']
+        self.play = Play(self.test_id, self.test_wicks)
+
+    def test_init(self):
+        test_play = Play(self.test_id, self.test_wicks)
+        self.assertEqual(self.test_id, test_play.id)
+        self.assertEqual(self.test_wicks, test_play.wicks)
+
     def test_from_dict(self):
         in_dict = TEST_DICT
         out_dict = deepcopy(TEST_DICT)
         out_dict['play_format'] = out_dict.pop('format')
         play = Play.from_dict(in_dict)
         self.assertDictEqual(play.__dict__, out_dict)
+
+    def test_set_expanded_genre(self):
+        test_genre = "Geeenre"
+        self.play.set_expanded_genre(test_genre)
+        self.assertEqual(self.play.expanded_genre, test_genre)
+
+    def test_set_today_true(self):
+        test_today = self.test_day
+        target_ce_jour_la = ' #CeJourLà'
+
+        self.play.greg_date = self.test_day
+        self.play.set_today(test_today)
+
+        self.assertEqual(self.play.ce_jour_la, target_ce_jour_la)
+
+    def test_set_today_false(self):
+        test_today = '09-30-1818'
+        target_ce_jour_la = ''
+
+        self.play.greg_date = self.test_day
+        self.play.set_today(test_today)
+
+        self.assertEqual(self.play.ce_jour_la, target_ce_jour_la)
+
 
 if __name__ == '__main__':
     main()
