@@ -309,7 +309,7 @@ if __name__ == '__main__':
     PLAY = Play.from_dict(PLAY_LIST[0])
     PLAY.set_today(get_date())
     PLAY.set_expanded_genre(EXPANDED_GENRE)
-    PLAY.make_phrases()
+    PLAY.build_phrases()
     print(PLAY)
 
     BOOK_IMAGE = None

@@ -1,7 +1,9 @@
 from copy import deepcopy
 from unittest import TestCase, main
 
-from play import au_theater, par_auteur, musique_de, Play
+from play import(
+    EXPAND_FORMAT, au_theater, expand_format, par_auteur, musique_de, Play
+    )
 
 TEST_DICT = {
     'id': 999,
@@ -57,6 +59,21 @@ class TestMunge(TestCase):
         out_text = musique_de(in_text)
         self.assertEqual(out_text, target_text)
 
+    def test_expand_format_singular(self):
+        test_acts = 1
+        test_format = 'a'
+        target_text = EXPAND_FORMAT['singular'][test_format]
+        test_text = expand_format(test_acts, test_format)
+        self.assertEqual(test_text, target_text)
+
+    def test_expand_format_plural(self):
+        test_acts = 5
+        test_format = 'tabl'
+        target_text = EXPAND_FORMAT['plural'][test_format]
+        test_text = expand_format(test_acts, test_format)
+        self.assertEqual(test_text, target_text)
+
+
 class TestPlay(TestCase):
 
     def setUp(self):
@@ -99,6 +116,15 @@ class TestPlay(TestCase):
         self.play.set_today(test_today)
 
         self.assertEqual(self.play.ce_jour_la, target_ce_jour_la)
+
+    def test_build_genre_phrase_blank(self):
+        self.play.play_format = ''
+        self.play.expanded_genre = ''
+
+        target_genre_phrase = ''
+        self.play.build_genre_phrase()
+
+        self.assertEqual(self.play.genre_phrase, target_genre_phrase)
 
 
 if __name__ == '__main__':

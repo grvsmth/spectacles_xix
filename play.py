@@ -4,18 +4,22 @@ Play - class for storing information about plays
 import locale
 
 TEMPLATE = {
-    'basic': '{0.title},{0.author_string}{0.gaf}{0.music_string} a débuté{0.ce_jour_la} {0.date_string} {0.theater_string}. Wicks nº. {0.wicks}.',
+    'basic': '{0.title},{0.author_string}{0.genre_phrase}{0.music_string} a débuté{0.ce_jour_la} {0.date_string} {0.theater_string}. Wicks nº. {0.wicks}.',
     'shorter': '{0.title},{0.author}{0.ce_jour_la} {0.date_string} {0.theater_code}. Wicks nº. {0.wicks}.'
     }
 
 EXPAND_FORMAT = {
-    'singulier': {'a': 'acte', 'tabl': 'tableau'},
-    'pluriel': {'a': 'actes', 'tabl': 'tableaux'}
+    'singular': {'a': 'acte', 'tabl': 'tableau'},
+    'plural': {'a': 'actes', 'tabl': 'tableaux'}
 }
+
+GENRE_TEMPLATE = " {},"
+GENRE_ACT_FORMAT_TEMPLATE = " {} en {} {},"
 
 TIMEZONE = 'Europe/Paris'
 DATE_FORMAT = "%A le %d %B %Y"
 locale.setlocale(locale.LC_TIME, "fr_FR")
+
 
 def au_theater(name):
     """
@@ -35,6 +39,7 @@ def au_theater(name):
     first_word = name.split(' ')[0]
     return loc[first_word] + name
 
+
 def par_auteur(name):
     """
     Add 'par' to the author names
@@ -43,6 +48,7 @@ def par_auteur(name):
     if name:
         author_phrase = " par {},".format(name)
     return author_phrase
+
 
 def musique_de(name):
     """
@@ -53,6 +59,13 @@ def musique_de(name):
         music_phrase = " musique de {},".format(name)
 
     return music_phrase
+
+def expand_format(acts, play_format):
+    if acts == 1:
+        return EXPAND_FORMAT['singular'][play_format]
+
+    return EXPAND_FORMAT['plural'][play_format]
+
 
 class Play:
     """
@@ -66,6 +79,8 @@ class Play:
         self.acts = ''
         self.play_format = ''
         self.genre = ''
+        self.expanded_genre = ''
+        self.genre_phrase = ''
         self.music = ''
         self.rev_date = ''
         self.theater_name = ''
@@ -105,38 +120,35 @@ class Play:
         if self.greg_date == today:
             self.ce_jour_la = ' #CeJourLà'
 
-    def genre_phrase(self):
+    def build_expanded_genre_phrase(self):
         """
         Generate genre and number of acts
         """
-        if self.play_format:
-            play_format = EXPAND_FORMAT['pluriel'][self.play_format]
-            if self.acts == 1:
-                play_format = EXPAND_FORMAT['singulier'][self.play_format]
-            return " {} en {} {},".format(self.expanded_genre, self.acts, play_format)
-        elif self.expanded_genre:
-            return " {},".format(self.expanded_genre)
+        genre = self.genre
+        if self.expanded_genre:
+            genre = self.expanded_genre
 
-        return ''
+        self.build_genre_phrase(genre)
 
-
-    def short_genre_phrase(self):
+    def build_genre_phrase(self, genre=None):
         """
         Generate short genre phrase
         """
+        if not genre:
+            genre = self.genre
+
+        if not genre:
+            return
+
         if self.play_format:
-            return " {} en {} {},".format(
-                self.genre,
-                self.acts,
-                self.play_format
+            expanded_format = expand_format(self.play_format)
+            self.genre_phrase = GENRE_ACT_FORMAT_TEMPLATE.format(
+                genre, self.acts, expanded_format
                 )
-        elif self.genre:
-            return " {},".format(self.genre)
+        else:
+            self.genre_phrase = GENRE_TEMPLATE.format(genre)
 
-        return ''
-
-
-    def make_phrases(self):
+    def build_phrases(self):
         """
         Expand theater, music and author into tweet-friendly strings
         """
@@ -144,8 +156,7 @@ class Play:
         self.theater_string = au_theater(self.theater_name)
         self.music_string = musique_de(self.music)
         self.author_string = par_auteur(self.author)
-        self.gaf = self.genre_phrase()
-
+        self.build_expanded_genre_phrase()
 
     def __repr__(self):
         """
@@ -159,7 +170,7 @@ class Play:
                 self.id,
                 len(self.description)
                 ))
-            self.sgaf = self.short_genre_phrase()
+            self.build_genre_phrase()
             self.description = TEMPLATE['basic'].format(self)
         if len(self.description) > 280:
             print("Description for play {} is STILL too long ({} characters)".format(
