@@ -4,7 +4,7 @@ from unittest import TestCase, main
 from unittest.mock import patch
 
 from play import(
-    EXPAND_FORMAT, GENRE_TEMPLATE, GENRE_ACT_FORMAT_TEMPLATE,
+    EXPAND_FORMAT, GENRE_TEMPLATE, GENRE_ACT_FORMAT_TEMPLATE, TEMPLATE,
     au_theater, expand_format, par_auteur, musique_de, Play
     )
 
@@ -276,10 +276,12 @@ class TestPlay(TestCase):
         m_par.assert_called_once_with(TEST_DICT['author'])
         m_build.assert_called_once_with()
 
-    @patch('play.build_genre_phrase')
-    @patch('play.au_theater')
-    def test_repr(self, mock_au, mock_build):
-        self.assertEqual(True, False)
+    @patch('play.Play.build_genre_phrase')
+    def test_repr(self, mock_build):
+        test_play = Play.from_dict(TEST_DICT)
+        target_description = TEMPLATE['basic'].format(test_play)
+        test_description = str(test_play)
+        self.assertEqual(test_description, target_description)
 
 if __name__ == '__main__':
     main()
