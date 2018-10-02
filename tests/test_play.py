@@ -1,7 +1,7 @@
 from copy import deepcopy
 from datetime import datetime
 from unittest import TestCase, main
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 from play import(
     EXPAND_FORMAT, GENRE_TEMPLATE, GENRE_ACT_FORMAT_TEMPLATE, TEMPLATE,
@@ -19,8 +19,9 @@ TEST_DICT = {
     'genre': 'op.-com',
     'theater_code': 'TMA',
     'theater_name': '',
-    'greg_date': '01-01-1818',
-    'rev_date': None
+    'greg_date': datetime.strptime('01-01-1818', "%d-%m-%Y").date(),
+    'rev_date': None,
+    'ce_jour_la': ''
     }
 
 
@@ -276,12 +277,38 @@ class TestPlay(TestCase):
         m_par.assert_called_once_with(TEST_DICT['author'])
         m_build.assert_called_once_with()
 
+
+class TestRepr(TestCase):
+
+    def setUp(self):
+        self.test_play = Play.from_dict(TEST_DICT)
+        self.test_play.build_phrases()
+
     @patch('play.Play.build_genre_phrase')
     def test_repr(self, mock_build):
-        test_play = Play.from_dict(TEST_DICT)
-        target_description = TEMPLATE['basic'].format(test_play)
-        test_description = str(test_play)
+        target_description = TEMPLATE['basic'].format(self.test_play)
+        test_description = str(self.test_play)
         self.assertEqual(test_description, target_description)
+        mock_build.assert_not_called()
+
+    @patch('play.Play.build_genre_phrase')
+    def test_repr_greater_than_280(self, mock_build):
+        self.test_play.title = 'La pièce avec le très très très très très très très long titre'
+        self.test_play.build_phrases()
+        target_description = TEMPLATE['basic'].format(self.test_play)
+        test_description = str(self.test_play)
+        self.assertEqual(test_description, target_description)
+        mock_build.assert_called_once_with(TEST_DICT['genre'])
+
+    @patch('play.Play.build_genre_phrase')
+    def test_repr_greater_than_280_with_short_genre(self, mock_build):
+        self.test_play.title = 'La pièce avec le très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très long titre'
+        self.test_play.build_phrases()
+        target_description = TEMPLATE['shorter'].format(self.test_play)
+        test_description = str(self.test_play)
+        self.assertEqual(test_description, target_description)
+        mock_build.assert_has_calls([call(TEST_DICT['genre']), call()])
+
 
 if __name__ == '__main__':
     main()

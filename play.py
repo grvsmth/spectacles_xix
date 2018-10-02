@@ -5,7 +5,7 @@ import locale
 
 TEMPLATE = {
     'basic': '{0.title},{0.author_string}{0.genre_phrase}{0.music_string} a débuté{0.ce_jour_la} {0.date_string} {0.theater_string}. Wicks nº. {0.wicks}.',
-    'shorter': '{0.title},{0.author}{0.ce_jour_la} {0.date_string} {0.theater_code}. Wicks nº. {0.wicks}.'
+    'shorter': '{0.title}, {0.author}{0.ce_jour_la} {0.date_string} {0.theater_code}. Wicks nº. {0.wicks}.'
     }
 
 EXPAND_FORMAT = {
@@ -37,7 +37,7 @@ def au_theater(name):
         'Opéra-Comique-Nationale': "à l'"
         }
     first_word = name.split(' ')[0]
-    return loc[first_word] + name
+    return loc.get(first_word, '') + name
 
 
 def par_auteur(name):
@@ -87,6 +87,7 @@ class Play:
         self.rev_date = ''
         self.theater_name = ''
         self.theater_code = ''
+        self.ce_jour_la = ''
         self.greg_date = None
 
     @classmethod
