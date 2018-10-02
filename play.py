@@ -55,7 +55,9 @@ def musique_de(name):
     Generate music phrase
     """
     music_phrase = ''
-    if name:
+    if name and name[0].lower() in 'aeiouy':
+        music_phrase = " musique d'{},".format(name)
+    elif name:
         music_phrase = " musique de {},".format(name)
 
     return music_phrase

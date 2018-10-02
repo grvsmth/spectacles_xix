@@ -1,4 +1,5 @@
 from copy import deepcopy
+from datetime import datetime
 from unittest import TestCase, main
 from unittest.mock import patch
 
@@ -52,6 +53,12 @@ class TestMunge(TestCase):
     def test_musique_de(self):
         in_text = 'Soleil'
         target_text = ' musique de Soleil,'
+        out_text = musique_de(in_text)
+        self.assertEqual(out_text, target_text)
+
+    def test_musique_de_vowel(self):
+        in_text = 'oleil'
+        target_text = " musique d'oleil,"
         out_text = musique_de(in_text)
         self.assertEqual(out_text, target_text)
 
@@ -201,6 +208,41 @@ class TestPlay(TestCase):
 
         self.assertEqual(self.play.genre_phrase, target_genre_phrase)
         mock_expand.assert_called_once_with(test_acts, test_format)
+
+    @patch('play.Play.build_expanded_genre_phrase')
+    @patch('play.par_auteur')
+    @patch('play.musique_de')
+    @patch('play.au_theater')
+    def test_build_phrases(self, m_au, m_musique, m_par, m_build):
+        target_date_string = 'samedi le 03 octobre 1818'
+
+        test_theater_name = 'Théâtre des Maréchaux'
+        target_theater_string = 'au Théâtre des Maréchaux'
+
+        test_music = 'Aznavour'
+        target_music_string = "musique d'Aznavour"
+        target_author_string = 'par Foo & Bar'
+
+        m_au.return_value = target_theater_string
+        m_musique.return_value = target_music_string
+        m_par.return_value = target_author_string
+
+        test_play = Play.from_dict(TEST_DICT)
+        test_play.music = test_music
+        test_play.greg_date = datetime.strptime('03-10-1818', "%d-%m-%Y").date()
+        test_play.theater_name = test_theater_name
+
+        test_play.build_phrases()
+
+        self.assertEqual(test_play.date_string, target_date_string)
+        self.assertEqual(test_play.theater_string, target_theater_string)
+        self.assertEqual(test_play.music_string, target_music_string)
+        self.assertEqual(test_play.author_string, target_author_string)
+
+        m_au.assert_called_once_with(test_theater_name)
+        m_musique.assert_called_once_with(test_music)
+        m_par.assert_called_once_with(TEST_DICT['author'])
+        m_build.assert_called_once_with()
 
 
 if __name__ == '__main__':
