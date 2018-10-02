@@ -150,22 +150,26 @@ class Play:
         else:
             self.genre_phrase = GENRE_TEMPLATE.format(genre)
 
+    def build_theater_string(self):
+        if self.theater_name:
+            self.theater_string = au_theater(self.theater_name)
+        else:
+            self.theater_string = au_theater(self.theater_code)
+
     def build_phrases(self):
         """
         Expand theater, music and author into tweet-friendly strings
         """
         self.date_string = self.greg_date.strftime(DATE_FORMAT)
-        self.theater_string = au_theater(self.theater_name)
         self.music_string = musique_de(self.music)
         self.author_string = par_auteur(self.author)
+        self.build_theater_string()
         self.build_expanded_genre_phrase()
 
     def __repr__(self):
         """
         Generate description for tweet
         """
-        if not self.theater_name:
-            self.theater_string = au_theater(self.theater_code)
         self.description = TEMPLATE['basic'].format(self)
         if len(self.description) > 280:
             print("Description for play {} is too long ({} characters)".format(

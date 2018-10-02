@@ -147,6 +147,38 @@ class TestPlay(TestCase):
 
         self.assertEqual(self.play.genre_phrase, target_genre_phrase)
 
+    @patch('play.au_theater')
+    def test_build_theater_string_from_name(self, mock_au_theater):
+        test_name = 'test name'
+        test_code = 'test code'
+
+        self.play.theater_name = test_name
+        self.play.theater_code = test_code
+
+        test_theater_string = 'test string'
+        mock_au_theater.return_value = test_theater_string
+
+        self.play.build_theater_string()
+
+        self.assertEqual(self.play.theater_string, test_theater_string)
+        mock_au_theater.assert_called_once_with(test_name)
+
+    @patch('play.au_theater')
+    def test_build_theater_string_from_code(self, mock_au_theater):
+        test_name = ''
+        test_code = 'test code'
+
+        self.play.theater_name = test_name
+        self.play.theater_code = test_code
+
+        test_theater_string = 'test string'
+        mock_au_theater.return_value = test_theater_string
+
+        self.play.build_theater_string()
+
+        self.assertEqual(self.play.theater_string, test_theater_string)
+        mock_au_theater.assert_called_once_with(test_code)
+
     @patch('play.Play.build_genre_phrase')
     def test_build_expanded_genre_phrase_not_really(self, mock_build):
         test_genre = 'op'
@@ -244,6 +276,10 @@ class TestPlay(TestCase):
         m_par.assert_called_once_with(TEST_DICT['author'])
         m_build.assert_called_once_with()
 
+    @patch('play.build_genre_phrase')
+    @patch('play.au_theater')
+    def test_repr(self, mock_au, mock_build):
+        self.assertEqual(True, False)
 
 if __name__ == '__main__':
     main()
