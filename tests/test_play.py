@@ -140,6 +140,28 @@ class TestPlay(TestCase):
 
         self.assertEqual(self.play.genre_phrase, target_genre_phrase)
 
+    @patch('play.Play.build_genre_phrase')
+    def test_build_expanded_genre_phrase_not_really(self, mock_build):
+        test_genre = 'op'
+        test_expanded_genre = ''
+        self.play.genre = test_genre
+        self.play.expanded_genre = test_expanded_genre
+
+        self.play.build_expanded_genre_phrase()
+
+        mock_build.assert_called_once_with(test_genre)
+
+    @patch('play.Play.build_genre_phrase')
+    def test_build_expanded_genre_phrase(self, mock_build):
+        test_genre = 'op'
+        test_expanded_genre = 'opéraa'
+        self.play.genre = test_genre
+        self.play.expanded_genre = test_expanded_genre
+
+        self.play.build_expanded_genre_phrase()
+
+        mock_build.assert_called_once_with(test_expanded_genre)
+
     @patch('play.expand_format')
     def test_build_genre_phrase_with_format(self, mock_expand):
         test_genre = 'foo'
@@ -147,7 +169,6 @@ class TestPlay(TestCase):
         test_acts = 5
         test_expanded_format = 'acts'
 
-        self.play.play_format = test_format
         self.play.play_format = test_format
         self.play.acts = test_acts
         self.play.genre = test_genre
@@ -160,6 +181,7 @@ class TestPlay(TestCase):
         self.play.build_genre_phrase()
 
         self.assertEqual(self.play.genre_phrase, target_genre_phrase)
+        mock_expand.assert_called_once_with(test_acts, test_format)
 
     @patch('play.expand_format')
     def test_build_genre_phrase_provided_with_format(self, mock_expand):
