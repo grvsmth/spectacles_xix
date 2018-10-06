@@ -14,6 +14,10 @@ QUERY_RE = re.compile(r'&dq=.+?(?=&)')
 
 
 def get_api(config_fn):
+    """
+    Given a Google API service account file, build a Google Books API client and
+    return it
+    """
     credentials = service_account.Credentials.from_service_account_file(
         config_fn,
         scopes=SCOPES
@@ -22,6 +26,10 @@ def get_api(config_fn):
 
 
 def search_api(api, term):
+    """
+    Given a Google Books API client and a term, search the API for that term and
+    return the first result
+    """
     try:
         vol_list = api.volumes().list(
             q=term,
@@ -48,19 +56,24 @@ class BookResult:
         self.image_url = image_url
 
     @classmethod
-    def from_api_response(cls, api_result):
-        if not api_result:
+    def from_api_response(cls, api_response):
+        """
+        Extract the book and image URLs from the API response and return a
+        BookResult object
+        """
+        if not api_response:
             return cls
 
-        book_url = api_result['volumeInfo']['previewLink']
-        image_url = api_result['volumeInfo']['imageLinks'].get('thumbnail')
+        book_url = api_response['volumeInfo']['previewLink']
+        image_url = api_response['volumeInfo']['imageLinks'].get('thumbnail')
         print("Found book url: " + book_url)
 
         return cls(book_url, image_url)
 
     def get_better_image_url(self):
         """
-        Transform book image link, increasing size and removing curled edge
+        Transform and return book image url, increasing size and removing curled
+        edge
         """
         if not self.image_url:
             return self.image_url
@@ -71,7 +84,7 @@ class BookResult:
 
     def get_better_book_url(self):
         """
-        Transform book image link, removing query terms
+        Transform and return book url, removing query terms
         """
         if not self.book_url:
             return self.book_url
