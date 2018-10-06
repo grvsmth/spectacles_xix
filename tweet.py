@@ -17,11 +17,9 @@ import pytz
 from twitter import Twitter, OAuth
 
 from play import Play
-import check_books
+from check_books import get_api, search_api, BookResult
 
 # TODO package
-
-# TODO convert check_books to a class
 
 # TODO unit tests
 
@@ -312,26 +310,25 @@ if __name__ == '__main__':
     PLAY.build_phrases()
     print(PLAY)
 
-    BOOK_IMAGE = None
+    BOOK_RESULT = BookResult()
     BOOK_LINK = ''
     if ARGS.book:
         print("Checking Google books API for {}".format(PLAY.title))
-        books_api = check_books.get_api(CONFIG['path']['google_service_account'])
-        book_result = check_books.search_api(
+        books_api = get_api(CONFIG['path']['google_service_account'])
+        book_response = search_api(
             books_api,
             "intitle:{} inauthor:{}".format(PLAY.title, PLAY.author)
             )
-        if book_result:
-            thumbnail_url = book_result['volumeInfo']['imageLinks'].get('thumbnail')
-            BOOK_IMAGE = check_books.fetch_file(thumbnail_url)
-            BOOK_LINK = check_books.munge_book_link(
-                book_result['volumeInfo']['previewLink']
-                )
+        BOOK_RESULT = BookResult.from_api_response(book_response)
 
     if ARGS.no_tweet:
         exit(0)
 
-    STATUS = send_tweet(CONFIG['twitter'], str(PLAY) + ' ' + BOOK_LINK, BOOK_IMAGE)
+    STATUS = send_tweet(
+        CONFIG['twitter'],
+        str(PLAY) + ' ' + BOOK_RESULT.get_better_book_url(),
+        BOOK_RESULT.get_image_file()
+        )
     if 'id' in STATUS:
         print("Sent tweet ID# {}".format(STATUS['id']))
         tweet_db(CONFIG['db'], PLAY_LIST[0]['id'])
