@@ -123,6 +123,8 @@ class TestBookResult(TestCase):
         self.book_url = 'https://test.url/book?foo=bar&dq=search+term&baz=oos'
         self.image_url = 'https://example.com/image_url?zoom=1&edge=curl'
 
+        self.target_image_url = 'https://example.com/image_url?zoom=3'
+
         self.result = BookResult(
             book_url=self.book_url,
             image_url=self.image_url
@@ -151,9 +153,8 @@ class TestBookResult(TestCase):
         self.assertEqual(test_result.image_url, target_image_url)
 
     def test_get_better_image_url(self):
-        target_url = 'https://example.com/image_url?zoom=3'
         test_url = self.result.get_better_image_url()
-        self.assertEqual(test_url, target_url)
+        self.assertEqual(test_url, self.target_image_url)
 
     def test_get_better_image_url_blank(self):
         target_url = ''
@@ -172,6 +173,31 @@ class TestBookResult(TestCase):
         test_url = self.result.get_better_book_url()
         self.assertEqual(test_url, target_url)
 
+    @patch('check_books.get')
+    @patch('check_books.BookResult.get_better_image_url')
+    def test_get_image_file(self, mock_image, mock_get):
+        mock_image.return_value = self.target_image_url
+        mock_content = 'test content'
+
+        mock_result = Mock(content=mock_content)
+        mock_get.return_value = mock_result
+
+        test_content = self.result.get_image_file()
+        self.assertEqual(test_content, mock_content)
+
+        mock_image.assert_called_once_with()
+        mock_get.assert_called_once_with(self.target_image_url)
+
+    @patch('check_books.get')
+    @patch('check_books.BookResult.get_better_image_url')
+    def test_get_image_file_empty(self, mock_image, mock_get):
+        mock_image.return_value = ''
+
+        test_content = self.result.get_image_file()
+        self.assertIsNone(test_content)
+
+        mock_image.assert_called_once_with()
+        mock_get.assert_not_called()
 
 
 if __name__ == '__main__':
