@@ -3,9 +3,9 @@ Functions for retrieving information from the Google Books API
 """
 import re
 
-from google.oauth2 import service_account
-import googleapiclient.discovery
-import googleapiclient.errors
+from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 
 from requests import get
 
@@ -18,11 +18,11 @@ def get_api(config_fn):
     Given a Google API service account file, build a Google Books API client and
     return it
     """
-    credentials = service_account.Credentials.from_service_account_file(
+    credentials = Credentials.from_service_account_file(
         config_fn,
         scopes=SCOPES
         )
-    return googleapiclient.discovery.build('books', 'v1', credentials=credentials)
+    return build('books', 'v1', credentials=credentials)
 
 
 def search_api(api, term):
@@ -36,7 +36,7 @@ def search_api(api, term):
             filter='free-ebooks',
             langRestrict='fr'
             ).execute()
-    except googleapiclient.errors.HttpError as err:
+    except HttpError as err:
         print("Error checking Books API: {}".format(err))
     if vol_list['totalItems'] > 0:
         return vol_list['items'][0]
