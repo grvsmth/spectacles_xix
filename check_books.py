@@ -1,6 +1,7 @@
 """
 Functions for retrieving information from the Google Books API
 """
+from logging import basicConfig, getLogger
 import re
 
 from google.oauth2.service_account import Credentials
@@ -12,6 +13,8 @@ from requests import get
 SCOPES = ['https://www.googleapis.com/auth/books']
 QUERY_RE = re.compile(r'&dq=.+?(?=&)')
 
+basicConfig(level='DEBUG')
+LOG = getLogger()
 
 def get_api(config_fn):
     """
@@ -22,7 +25,9 @@ def get_api(config_fn):
         config_fn,
         scopes=SCOPES
         )
-    return build('books', 'v1', credentials=credentials)
+    return build(
+        'books', 'v1', credentials=credentials, cache_discovery=False
+        )
 
 
 def search_api(api, term):
@@ -37,7 +42,9 @@ def search_api(api, term):
             langRestrict='fr'
             ).execute()
     except HttpError as err:
-        print("Error checking Books API: {}".format(err))
+        LOG.error("Error checking Books API: %s", err)
+        return None
+
     if vol_list['totalItems'] > 0:
         return vol_list['items'][0]
     return None
@@ -66,7 +73,7 @@ class BookResult:
 
         book_url = api_response['volumeInfo']['previewLink']
         image_url = api_response['volumeInfo']['imageLinks'].get('thumbnail')
-        print("Found book url: " + book_url)
+        LOG.info("Found book url: %s", book_url)
 
         return cls(book_url, image_url)
 
