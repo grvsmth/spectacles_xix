@@ -36,11 +36,13 @@ def search_api(api, term):
     return the first result
     """
     try:
-        vol_list = api.volumes().list(
+        volumes = api.volumes()
+        vol_list_object = volumes.list(
             q=term,
             filter='free-ebooks',
             langRestrict='fr'
-            ).execute()
+            )
+        vol_list = vol_list_object.execute()
     except HttpError as err:
         LOG.error("Error checking Books API: %s", err)
         return None
