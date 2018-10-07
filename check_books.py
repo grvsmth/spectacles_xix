@@ -71,7 +71,7 @@ class BookResult:
         BookResult object
         """
         if not api_response:
-            return cls
+            return cls()
 
         book_url = api_response['volumeInfo']['previewLink']
         image_url = api_response['volumeInfo']['imageLinks'].get('thumbnail')
