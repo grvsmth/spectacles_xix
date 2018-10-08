@@ -104,6 +104,8 @@ def abbreviation_db(cursor, word):
                 word,
                 err
                 )
+            return word
+
         res = cursor.fetchone()
 
         if res:
