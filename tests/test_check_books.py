@@ -5,7 +5,9 @@ data
 from unittest import TestCase, main
 from unittest.mock import Mock, patch
 
-from check_books import SCOPES, get_api, search_api, BookResult, HttpError
+from check_books import(
+    SCOPES, check_books_api, get_api, search_api, BookResult, HttpError
+    )
 
 
 class TestApi(TestCase):
@@ -115,6 +117,28 @@ class TestApi(TestCase):
             langRestrict='fr'
             )
         mock_volumes.list.return_value.execute.assert_called_once_with()
+
+    @patch('check_books.BookResult')
+    @patch('check_books.search_api')
+    @patch('check_books.get_api')
+    def test_check_books_api(self, mock_get, mock_search, mock_result):
+        test_config_path = '/path/to/config/file.json'
+
+        test_title = 'test title'
+        test_author = 'test author'
+        mock_play = Mock(title=test_title, author=test_author)
+
+        mock_api = Mock()
+        mock_get.return_value = mock_api
+
+        test_response = {'volumeInfo': 'foo'}
+        mock_search.return_value = test_response
+
+        mock_result_object = Mock()
+        mock_result.from_api_response.return_value = mock_result_object
+
+        test_result = check_books_api(test_config_path, mock_play)
+        self.assertEqual(test_result, mock_result_object)
 
 
 class TestBookResult(TestCase):

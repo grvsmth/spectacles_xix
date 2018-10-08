@@ -8,18 +8,18 @@ from datetime import datetime
 import json
 import locale
 from pathlib import Path
-import re
 
-import MySQLdb
-import MySQLdb.cursors
 from dateutil import relativedelta
 import pytz
 from twitter import Twitter, OAuth
 
 from play import Play
-from check_books import get_api, search_api, BookResult
+from check_books import check_books_api, BookResult
+from db_ops import load_from_db, expand_abbreviation, tweet_db
 
 # TODO package
+
+# TODO config ini
 
 # TODO unit tests
 
@@ -44,139 +44,6 @@ def load_config():
 
     return config
 
-def load_from_db(config, greg_date=None, wicks=None, tweeted=False, limit=None):
-    """
-    Load data from db
-    """
-    play_list = []
-
-    where_tweeted = {
-        True: '',
-        False: 'last_tweeted IS NULL\n    AND '
-        }
-
-
-    if not wicks and not greg_date:
-        return play_list
-
-    lookup_col = 'wicks'
-    lookup_term = wicks
-    if not wicks:
-        lookup_col = 'greg_date'
-        lookup_term = greg_date.isoformat()
-
-    limit_string = ''
-    if limit:
-        limit_string = ' LIMIT {}'.format(limit)
-
-    playq = """SELECT id, wicks, title, author, genre, acts, format,
-    music, spectacle_play.theater_code, theater_name, greg_date, rev_date
-    FROM spectacle_play LEFT JOIN spectacle_theater USING (theater_code)
-    WHERE {}{} = %s{}
-    """.format(where_tweeted[tweeted], lookup_col, limit_string)
-
-    with MySQLdb.connect(
-        config['host'],
-        config['user'],
-        config['password'],
-        config['db'],
-        charset='utf8',
-        cursorclass=MySQLdb.cursors.DictCursor
-        ) as cursor:
-
-        cursor.execute('SET NAMES utf8;')
-        cursor.execute('SET CHARACTER SET utf8;')
-        cursor.execute('SET character_set_connection=utf8;')
-        try:
-            cursor.execute(playq, [lookup_term])
-            play_res = cursor.fetchall()
-        except MySQLdb.DatabaseError as err:
-            print("Error retrieving plays for {}: {}".format(lookup_term, err))
-            return play_list
-
-        for row in play_res:
-            play_list.append(row)
-
-    return play_list
-
-def expand_abbreviation(config, abbrev):
-    """
-    Look up abbreviation expansion in the database
-    """
-    abbrevq = """SELECT expansion FROM spectacle_abbrev
-    WHERE abbrev = %s
-    """
-    if not abbrev:
-        return None
-
-    # Find abbreviated words and iterate through them
-    abbrev_match = re.finditer('(\w+)\.', abbrev)
-    if not abbrev_match:
-        return abbrev
-
-    replacements = set()
-
-    with MySQLdb.connect(
-        config['host'],
-        config['user'],
-        config['password'],
-        config['db'],
-        charset='utf8'
-        ) as cursor:
-
-        cursor.execute('SET NAMES utf8;')
-        cursor.execute('SET CHARACTER SET utf8;')
-        cursor.execute('SET character_set_connection=utf8;')
-
-        for mo in abbrev_match:
-            this_abbrev = mo.group(1)
-
-            try:
-                cursor.execute(abbrevq, [this_abbrev])
-
-            except MySQLdb.DatabaseError as err:
-                print("Error retrieving expansion for abbreviation {}: {}".format(
-                    abbrev,
-                    err
-                    ))
-            res = cursor.fetchone()
-
-            if res:
-                replacements.add((this_abbrev, res[0]))
-
-    for (this_abbrev, this_exp) in replacements:
-        abbrev = abbrev.replace(this_abbrev + '.', this_exp)
-
-    return abbrev
-
-def tweet_db(config, play_id):
-    """
-    Save data to db
-    """
-
-    tweetq = """UPDATE spectacle_play
-    SET last_tweeted = %s
-    WHERE id = %s
-    """
-
-    with MySQLdb.connect(
-        config['host'],
-        config['user'],
-        config['password'],
-        config['db'],
-        charset='utf8'
-        ) as cursor:
-
-        cursor.execute('SET NAMES utf8;')
-        cursor.execute('SET CHARACTER SET utf8;')
-        cursor.execute('SET character_set_connection=utf8;')
-        try:
-            cursor.execute(tweetq, [datetime.now().strftime("%Y-%m-%d"), play_id])
-        except MySQLdb.DatabaseError as err:
-            print("Error updating tweeted timestamp for {}: {}".format(
-                play_id,
-                err
-                ))
 
 def get_date(date_string=None):
     """
@@ -313,13 +180,9 @@ if __name__ == '__main__':
     BOOK_RESULT = BookResult()
     BOOK_LINK = ''
     if ARGS.book:
-        print("Checking Google books API for {}".format(PLAY.title))
-        books_api = get_api(CONFIG['path']['google_service_account'])
-        book_response = search_api(
-            books_api,
-            "intitle:{} inauthor:{}".format(PLAY.title, PLAY.author)
+        BOOK_RESULT = check_books_api(
+            CONFIG['path']['google_service_account'], PLAY
             )
-        BOOK_RESULT = BookResult.from_api_response(book_response)
 
     if ARGS.no_tweet:
         exit(0)

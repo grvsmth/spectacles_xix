@@ -52,6 +52,20 @@ def search_api(api, term):
     return None
 
 
+def check_books_api(config_path, play):
+    """
+    Given the path to a config file and a Play object, generate an API object
+    and search it for the play title and author
+    """
+    LOG.info("Checking Google books API for %s", play.title)
+    books_api = get_api(config_path)
+    book_response = search_api(
+        books_api,
+        "intitle:{} inauthor:{}".format(play.title, play.author)
+        )
+    return BookResult.from_api_response(book_response)
+
+
 class BookResult:
     """
     Class for organizing results of a book API search
