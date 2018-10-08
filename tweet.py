@@ -57,6 +57,7 @@ def get_date(date_string=None):
 
     return our_date
 
+
 def time_to_tweet(play_count):
     """
     Determine whether this is a good time to tweet
@@ -88,6 +89,7 @@ def time_to_tweet(play_count):
 
     return False
 
+
 def send_tweet(config, message, title_image):
     """
     Send the tweet
@@ -118,6 +120,7 @@ def send_tweet(config, message, title_image):
 
     status = twapi.statuses.update(status=message)
     return status
+
 
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser(
