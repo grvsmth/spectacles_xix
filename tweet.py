@@ -7,6 +7,7 @@ import argparse
 from datetime import datetime
 import json
 import locale
+from logging import basicConfig, getLogger
 from pathlib import Path
 
 from dateutil import relativedelta
@@ -18,7 +19,6 @@ from check_books import check_books_api, BookResult
 from db_ops import db_cursor, load_from_db, expand_abbreviation, tweet_db
 
 # TODO package
-# TODO logging in db_ops and tweet.py
 # TODO config ini
 
 # TODO unit tests
@@ -29,6 +29,9 @@ DATE_FORMAT = "%A le %d %B %Y"
 locale.setlocale(locale.LC_TIME, "fr_FR")
 
 LOCAL_NOW = pytz.timezone(TIMEZONE).localize(datetime.now())
+
+basicConfig(level="DEBUG")
+LOG = getLogger()
 
 def load_config():
     """
@@ -63,17 +66,18 @@ def time_to_tweet(play_count):
     Determine whether this is a good time to tweet
     """
     if not play_count:
-        print("No plays: {}".format(play_count))
+        LOG.info("No plays: %s", play_count)
         return False
 
     this_hour = LOCAL_NOW.hour
     hours_remaining = 23 - this_hour
     hours_per_tweet = hours_remaining / play_count
-    print("{} hours remaining / {} plays = {}".format(
+    LOG.info(
+        "%s hours remaining / %s plays = %s",
         hours_remaining,
         play_count,
         hours_per_tweet
-        ))
+        )
 
     # if we have 1 or less hours per tweet, then just tweet
     if hours_per_tweet <= 1:
@@ -153,14 +157,14 @@ if __name__ == '__main__':
         LOOKUP_TERM = TODAY_DATE.strftime(DATE_FORMAT)
 
     if not PLAY_LIST:
-        print("No plays for {}".format(LOOKUP_TERM))
+        LOG.info("No plays for %s", LOOKUP_TERM)
 
         if ARGS.wicks:
             exit(0)
 
         # Look for one play from the first of the month
         PLAY_DATE = TODAY_DATE.replace(day=1)
-        print("Checking for plays on {}".format(PLAY_DATE))
+        LOG.info("Checking for plays on %s", PLAY_DATE)
         PLAY_LIST = load_from_db(
             CONFIG['db'],
             greg_date=PLAY_DATE,
@@ -168,7 +172,7 @@ if __name__ == '__main__':
             limit=1
             )
         if not PLAY_LIST:
-            print("No plays for {}".format(PLAY_DATE))
+            LOG.info("No plays for %s", PLAY_DATE)
             exit(0)
 
     with db_cursor(CONFIG['db']) as CURSOR:
@@ -180,7 +184,7 @@ if __name__ == '__main__':
         PLAY.set_today(get_date())
         PLAY.set_expanded_genre(EXPANDED_GENRE)
         PLAY.build_phrases()
-        print(PLAY)
+        LOG.info(PLAY)
 
         BOOK_RESULT = BookResult()
         BOOK_LINK = ''
@@ -198,5 +202,5 @@ if __name__ == '__main__':
             BOOK_RESULT.get_image_file()
             )
         if 'id' in STATUS:
-            print("Sent tweet ID# {}".format(STATUS['id']))
+            LOG.info("Sent tweet ID# %s", STATUS['id'])
             tweet_db(CURSOR, PLAY_LIST[0]['id'])
