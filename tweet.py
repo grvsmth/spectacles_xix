@@ -15,10 +15,10 @@ from twitter import Twitter, OAuth
 
 from play import Play
 from check_books import check_books_api, BookResult
-from db_ops import load_from_db, expand_abbreviation, tweet_db
+from db_ops import db_cursor, load_from_db, expand_abbreviation, tweet_db
 
 # TODO package
-
+# TODO logging in db_ops and tweet.py
 # TODO config ini
 
 # TODO unit tests
@@ -133,6 +133,7 @@ if __name__ == '__main__':
     TODAY_DATE = get_date(ARGS.date)
 
     CONFIG = load_config()
+
     if ARGS.wicks:
         PLAY_LIST = load_from_db(
             CONFIG['db'],
@@ -167,31 +168,32 @@ if __name__ == '__main__':
             print("No plays for {}".format(PLAY_DATE))
             exit(0)
 
-    if not ARGS.no_tweet and not ARGS.force and not time_to_tweet(len(PLAY_LIST)):
-        exit(0)
+    with db_cursor(CONFIG['db']) as CURSOR:
+        if not ARGS.no_tweet and not ARGS.force and not time_to_tweet(len(PLAY_LIST)):
+            exit(0)
 
-    EXPANDED_GENRE = expand_abbreviation(CONFIG['db'], PLAY_LIST[0]['genre'])
-    PLAY = Play.from_dict(PLAY_LIST[0])
-    PLAY.set_today(get_date())
-    PLAY.set_expanded_genre(EXPANDED_GENRE)
-    PLAY.build_phrases()
-    print(PLAY)
+        EXPANDED_GENRE = expand_abbreviation(CURSOR, PLAY_LIST[0]['genre'])
+        PLAY = Play.from_dict(PLAY_LIST[0])
+        PLAY.set_today(get_date())
+        PLAY.set_expanded_genre(EXPANDED_GENRE)
+        PLAY.build_phrases()
+        print(PLAY)
 
-    BOOK_RESULT = BookResult()
-    BOOK_LINK = ''
-    if ARGS.book:
-        BOOK_RESULT = check_books_api(
-            CONFIG['path']['google_service_account'], PLAY
+        BOOK_RESULT = BookResult()
+        BOOK_LINK = ''
+        if ARGS.book:
+            BOOK_RESULT = check_books_api(
+                CONFIG['path']['google_service_account'], PLAY
+                )
+
+        if ARGS.no_tweet:
+            exit(0)
+
+        STATUS = send_tweet(
+            CONFIG['twitter'],
+            str(PLAY) + ' ' + BOOK_RESULT.get_better_book_url(),
+            BOOK_RESULT.get_image_file()
             )
-
-    if ARGS.no_tweet:
-        exit(0)
-
-    STATUS = send_tweet(
-        CONFIG['twitter'],
-        str(PLAY) + ' ' + BOOK_RESULT.get_better_book_url(),
-        BOOK_RESULT.get_image_file()
-        )
-    if 'id' in STATUS:
-        print("Sent tweet ID# {}".format(STATUS['id']))
-        tweet_db(CONFIG['db'], PLAY_LIST[0]['id'])
+        if 'id' in STATUS:
+            print("Sent tweet ID# {}".format(STATUS['id']))
+            tweet_db(CURSOR, PLAY_LIST[0]['id'])
