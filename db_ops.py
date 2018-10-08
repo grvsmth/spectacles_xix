@@ -4,7 +4,6 @@ Database-related functions for spectacles_xix twitter bot
 from contextlib import contextmanager
 from datetime import datetime
 from logging import basicConfig, getLogger
-from re import finditer
 
 from MySQLdb import connect, DatabaseError
 from MySQLdb.cursors import DictCursor
@@ -88,44 +87,30 @@ def load_from_db(config, greg_date=None, wicks=None, tweeted=False, limit=None):
 
     return play_list
 
-def expand_abbreviation(cursor, abbrev):
+
+def abbreviation_db(cursor, word):
     """
     Look up abbreviation expansion in the database
     """
-    abbrevq = """SELECT expansion FROM spectacle_abbrev
-    WHERE abbrev = %s
-    """
-    if not abbrev:
-        return None
+    abbrevq = "SELECT expansion FROM spectacle_abbrev WHERE abbrev = %s"
 
-    # Find abbreviated words and iterate through them
-    abbrev_match = finditer('(\w+)\.', abbrev)
-    if not abbrev_match:
-        return abbrev
-
-    replacements = set()
-
-    for mo in abbrev_match:
-        this_abbrev = mo.group(1)
-
+    if word:
         try:
-            cursor.execute(abbrevq, [this_abbrev])
+            cursor.execute(abbrevq, [word])
 
         except DatabaseError as err:
             LOG.error(
-                "Error retrieving expansion for abbreviation %s: %s",
-                abbrev,
+                "Error retrieving expansion for word %s: %s",
+                word,
                 err
                 )
         res = cursor.fetchone()
 
         if res:
-            replacements.add((this_abbrev, res[0]))
+            word = res[0]
 
-    for (this_abbrev, this_exp) in replacements:
-        abbrev = abbrev.replace(this_abbrev + '.', this_exp)
+    return word
 
-    return abbrev
 
 def tweet_db(cursor, play_id):
     """

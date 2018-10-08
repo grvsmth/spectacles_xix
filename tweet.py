@@ -9,6 +9,7 @@ import json
 import locale
 from logging import basicConfig, getLogger
 from pathlib import Path
+from re import finditer
 
 from dateutil import relativedelta
 import pytz
@@ -16,7 +17,7 @@ from twitter import Twitter, OAuth
 
 from play import Play
 from check_books import check_books_api, BookResult
-from db_ops import db_cursor, load_from_db, expand_abbreviation, tweet_db
+from db_ops import db_cursor, load_from_db, abbreviation_db, tweet_db
 
 # TODO package
 # TODO config ini
@@ -124,6 +125,31 @@ def send_tweet(config, message, title_image):
 
     status = twapi.statuses.update(status=message)
     return status
+
+
+def expand_abbreviation(cursor, phrase):
+    """
+    Look up abbreviation expansion in the database
+    """
+    # Find abbreviated words and iterate through them
+    abbrev_match = finditer('(\w+)\.', phrase)
+    if not abbrev_match:
+        return phrase
+
+    replacements = set()
+
+    for mo in abbrev_match:
+        abbreviation = mo.group(1)
+
+        expansion = abbreviation_db(cursor, abbreviation)
+
+        if expansion:
+            replacements.add((abbreviation, expansion))
+
+    for (abbreviation, expansion) in replacements:
+        phrase = phrase.replace(abbreviation + '.', expansion)
+
+    return phrase
 
 
 if __name__ == '__main__':
