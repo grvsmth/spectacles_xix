@@ -34,7 +34,7 @@ locale.setlocale(locale.LC_TIME, "fr_FR")
 LOCAL_NOW = pytz.timezone(TIMEZONE).localize(datetime.now())
 
 basicConfig(level="DEBUG")
-LOG = getLogger()
+LOG = getLogger(__name__)
 
 def load_config():
     """

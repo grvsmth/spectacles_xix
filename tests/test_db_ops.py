@@ -105,6 +105,48 @@ class TestDB(TestCase):
         test_result = play_db(mock_cursor, test_query_string, test_lookup_term)
 
         self.assertEqual(mock_result, test_result)
+        mock_cursor.execute.assert_called_once_with(
+            test_query_string, [test_lookup_term]
+            )
+        mock_cursor.fetchall.assert_called_once_with()
+
+    def test_play_db_empty(self):
+        test_query_string = 'query string'
+        test_lookup_term = 'lookup term'
+
+        mock_result = []
+        mock_cursor = Mock()
+        mock_cursor.fetchall.return_value = mock_result
+
+        with self.assertLogs(level="INFO"):
+            test_result = play_db(
+                mock_cursor, test_query_string, test_lookup_term
+                )
+
+        self.assertEqual(mock_result, test_result)
+        mock_cursor.execute.assert_called_once_with(
+            test_query_string, [test_lookup_term]
+            )
+        mock_cursor.fetchall.assert_called_once_with()
+
+    def test_play_db_error(self):
+        test_query_string = 'query string'
+        test_lookup_term = 'lookup term'
+
+        mock_result = []
+        mock_cursor = Mock()
+        mock_cursor.execute.side_effect = DatabaseError()
+
+        with self.assertLogs(level="ERROR"):
+            test_result = play_db(
+                mock_cursor, test_query_string, test_lookup_term
+                )
+
+        self.assertEqual(mock_result, test_result)
+        mock_cursor.execute.assert_called_once_with(
+            test_query_string, [test_lookup_term]
+            )
+        mock_cursor.fetchall.assert_not_called()
 
 
 
