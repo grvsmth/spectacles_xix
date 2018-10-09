@@ -17,7 +17,9 @@ from twitter import Twitter, OAuth
 
 from play import Play
 from check_books import check_books_api, BookResult
-from db_ops import db_cursor, load_from_db, abbreviation_db, tweet_db
+from db_ops import(
+    db_cursor, query_by_wicks_id, query_by_date, abbreviation_db, tweet_db
+    )
 
 # TODO package
 # TODO config ini
@@ -168,38 +170,21 @@ if __name__ == '__main__':
     CONFIG = load_config()
 
     if ARGS.wicks:
-        PLAY_LIST = load_from_db(
-            CONFIG['db'],
-            wicks=ARGS.wicks,
-            tweeted=ARGS.tweeted
-            )
-        LOOKUP_TERM = ARGS.wicks
-    else:
-        PLAY_LIST = load_from_db(
-            CONFIG['db'],
-            greg_date=TODAY_DATE,
-            tweeted=ARGS.tweeted
-            )
-        LOOKUP_TERM = TODAY_DATE.strftime(DATE_FORMAT)
-
-    if not PLAY_LIST:
-        LOG.info("No plays for %s", LOOKUP_TERM)
-
-        if ARGS.wicks:
-            exit(0)
-
-        # Look for one play from the first of the month
-        PLAY_DATE = TODAY_DATE.replace(day=1)
-        LOG.info("Checking for plays on %s", PLAY_DATE)
-        PLAY_LIST = load_from_db(
-            CONFIG['db'],
-            greg_date=PLAY_DATE,
-            tweeted=ARGS.tweeted,
-            limit=1
-            )
+        PLAY_LIST = query_by_wicks_id(CONFIG['db'], ARGS.wicks, ARGS.tweeted)
         if not PLAY_LIST:
-            LOG.info("No plays for %s", PLAY_DATE)
             exit(0)
+    else:
+        PLAY_LIST = query_by_date(CONFIG['db'], TODAY_DATE, ARGS.tweeted)
+
+        if not PLAY_LIST:
+            # Look for one play from the first of the month
+            PLAY_DATE = TODAY_DATE.replace(day=1)
+            LOG.info("Checking for plays on %s", PLAY_DATE)
+            PLAY_LIST = query_by_date(
+                CONFIG['db'], PLAY_DATE, ARGS.tweeted, limit=1
+                )
+            if not PLAY_LIST:
+                exit(0)
 
     with db_cursor(CONFIG['db']) as CURSOR:
         if not ARGS.no_tweet and not ARGS.force and not time_to_tweet(len(PLAY_LIST)):

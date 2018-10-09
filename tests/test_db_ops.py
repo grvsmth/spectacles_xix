@@ -3,8 +3,15 @@ from unittest.mock import Mock
 
 from MySQLdb import DatabaseError
 
-from db_ops import abbreviation_db, db_cursor, load_from_db, tweet_db
-
+from db_ops import(
+    abbreviation_db,
+    db_cursor,
+    play_db,
+    query_by_wicks_id,
+    query_by_date,
+    query_play,
+    tweet_db
+    )
 
 class TestDB(TestCase):
 
@@ -82,6 +89,22 @@ class TestDB(TestCase):
             mock_cursor.execute.mock_calls[0][1][1], [test_abbreviation]
             )
         mock_cursor.fetchone.assert_not_called()
+
+    def test_play_db(self):
+        test_query_string = 'query string'
+        test_lookup_term = 'lookup term'
+
+        mock_result = [
+            ('test 1', 'test 2', 'test 3', 4),
+            ('test 1a', 'test 2a', 'test 3a', 5)
+            ]
+
+        mock_cursor = Mock()
+        mock_cursor.fetchall.return_value = mock_result
+
+        test_result = play_db(mock_cursor, test_query_string, test_lookup_term)
+
+        self.assertEqual(mock_result, test_result)
 
 
 

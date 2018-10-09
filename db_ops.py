@@ -6,13 +6,21 @@ from datetime import datetime
 from logging import basicConfig, getLogger
 
 from MySQLdb import connect, DatabaseError
-from MySQLdb.cursors import DictCursor
+from MySQLdb.cursors import Cursor, DictCursor
 
 basicConfig(level="DEBUG")
-LOG=getLogger()
+LOG=getLogger(__name__)
+
+PLAY_SELECT = """SELECT id, wicks, title, author, genre, acts, format,
+        music, spectacle_play.theater_code, theater_name, greg_date, rev_date
+    FROM spectacle_play LEFT JOIN spectacle_theater USING (theater_code)
+    """
+
+NOT_TWEETED_CONDITION = 'AND last_tweeted IS NULL'
+
 
 @contextmanager
-def db_cursor(config):
+def db_cursor(config, cursorclass=Cursor):
     """
     Create db cursor and yield it
     """
@@ -21,7 +29,8 @@ def db_cursor(config):
         config['user'],
         config['password'],
         config['db'],
-        charset='utf8'
+        charset='utf8',
+        cursorclass=cursorclass
         ) as cursor:
 
         cursor.execute('SET NAMES utf8;')
@@ -30,61 +39,74 @@ def db_cursor(config):
         yield cursor
 
 
-def load_from_db(config, greg_date=None, wicks=None, tweeted=False, limit=None):
+def query_by_wicks_id(config, wicks, tweeted=False):
     """
-    Load data from db
+    Search for a play based on the Wicks ID
     """
-    play_list = []
+    wicks_condition = "WHERE wicks = %s"
+    tweeted_condition = ''
+    if not tweeted:
+        tweeted_condition = NOT_TWEETED_CONDITION
 
-    where_tweeted = {
-        True: '',
-        False: 'last_tweeted IS NULL\n    AND '
-        }
+    query_string = '\n'.join((PLAY_SELECT, wicks_condition, tweeted_condition))
+
+    return query_play(config, query_string, wicks)
 
 
-    if not wicks and not greg_date:
-        return play_list
+def query_by_date(config, greg_date, tweeted=False, limit=None):
+    """
+    Search for a play based on the Gregorian date
+    """
+    date_condition = "WHERE greg_date = %s"
 
-    lookup_col = 'wicks'
-    lookup_term = wicks
-    if not wicks:
-        lookup_col = 'greg_date'
-        lookup_term = greg_date.isoformat()
+    tweeted_condition = ''
+    if not tweeted:
+        tweeted_condition = NOT_TWEETED_CONDITION
 
     limit_string = ''
     if limit:
-        limit_string = ' LIMIT {}'.format(limit)
+        limit_string = "LIMIT 1"
 
-    playq = """SELECT id, wicks, title, author, genre, acts, format,
-    music, spectacle_play.theater_code, theater_name, greg_date, rev_date
-    FROM spectacle_play LEFT JOIN spectacle_theater USING (theater_code)
-    WHERE {}{} = %s{}
-    """.format(where_tweeted[tweeted], lookup_col, limit_string)
+    query_string = '\n'.join(
+        (PLAY_SELECT, date_condition, tweeted_condition, limit_string)
+        )
+    return query_play(config, query_string, greg_date.isoformat())
 
-    with connect(
-        config['host'],
-        config['user'],
-        config['password'],
-        config['db'],
-        charset='utf8',
-        cursorclass=DictCursor
-        ) as cursor:
 
-        cursor.execute('SET NAMES utf8;')
-        cursor.execute('SET CHARACTER SET utf8;')
-        cursor.execute('SET character_set_connection=utf8;')
-        try:
-            cursor.execute(playq, [lookup_term])
-            play_res = cursor.fetchall()
-        except DatabaseError as err:
-            LOG.error(
-                "Error retrieving plays for %s: %s", lookup_term, err
-                )
-            return play_list
+def query_play(config, query_string, lookup_term):
+    """
+    Given a database configuration, a query string and a lookup term, search for
+    plays and return a list
+    """
+    with db_cursor(config, cursorclass=DictCursor) as cursor:
+        play_list = play_db(cursor, query_string, lookup_term)
 
-        for row in play_res:
-            play_list.append(row)
+    return play_list
 
+
+def play_db(cursor, query_string, lookup_term):
+    """
+    Given a query string and a term, retrieve the list of plays associated with
+    that term
+    """
+    play_list = []
+    LOG.debug(query_string)
+    LOG.debug(lookup_term)
+
+    try:
+        cursor.execute(query_string, [lookup_term])
+        play_res = cursor.fetchall()
+    except DatabaseError as err:
+        LOG.error(
+            "Error retrieving plays for %s: %s", lookup_term, err
+            )
+        return play_list
+
+    for row in play_res:
+        play_list.append(row)
+
+    if not play_list:
+        LOG.info("No plays for %s", lookup_term)
     return play_list
 
 
