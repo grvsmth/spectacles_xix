@@ -90,8 +90,6 @@ def play_db(cursor, query_string, lookup_term):
     that term
     """
     play_list = []
-    LOG.debug(query_string)
-    LOG.debug(lookup_term)
 
     try:
         cursor.execute(query_string, [lookup_term])

@@ -154,6 +154,23 @@ def expand_abbreviation(cursor, phrase):
     return phrase
 
 
+def check_by_date(config, today_date, tweeted):
+    """
+    Given a config dict, a date and whether to search already tweeted plays,
+    check for plays with the given date.  If there are non, check from the first
+    of the month.
+    """
+    play_list = query_by_date(config, today_date, tweeted)
+
+    if not play_list:
+        # Look for one play from the first of the month
+        first_of_the_month = today_date.replace(day=1)
+        LOG.info("Checking for plays on %s", first_of_the_month)
+        play_list = query_by_date(config, first_of_the_month, tweeted, limit=1)
+
+    return play_list
+
+
 if __name__ == '__main__':
     PARSER = argparse.ArgumentParser(
         description='Compose and send a tweet about a play from the Parisian Stage'
@@ -171,20 +188,11 @@ if __name__ == '__main__':
 
     if ARGS.wicks:
         PLAY_LIST = query_by_wicks_id(CONFIG['db'], ARGS.wicks, ARGS.tweeted)
-        if not PLAY_LIST:
-            exit(0)
     else:
-        PLAY_LIST = query_by_date(CONFIG['db'], TODAY_DATE, ARGS.tweeted)
+        PLAY_LIST = check_by_date(CONFIG['db'], TODAY_DATE, ARGS.tweeted)
 
-        if not PLAY_LIST:
-            # Look for one play from the first of the month
-            PLAY_DATE = TODAY_DATE.replace(day=1)
-            LOG.info("Checking for plays on %s", PLAY_DATE)
-            PLAY_LIST = query_by_date(
-                CONFIG['db'], PLAY_DATE, ARGS.tweeted, limit=1
-                )
-            if not PLAY_LIST:
-                exit(0)
+    if not PLAY_LIST:
+        exit(0)
 
     with db_cursor(CONFIG['db']) as CURSOR:
         if not ARGS.no_tweet and not ARGS.force and not time_to_tweet(len(PLAY_LIST)):
