@@ -4,6 +4,8 @@ from unittest.mock import Mock, patch
 from MySQLdb import DatabaseError
 
 from db_ops import(
+    NOT_TWEETED_CONDITION,
+    PLAY_SELECT,
     abbreviation_db,
     db_cursor,
     play_db,
@@ -13,13 +15,15 @@ from db_ops import(
     tweet_db
     )
 
-class TestDB(TestCase):
+class TestQuery(TestCase):
 
     def setUp(self):
         self.mock_result = [
             ('test 1', 'test 2', 'test 3', 4),
             ('test 1a', 'test 2a', 'test 3a', 5)
             ]
+        self.config = {'test 1': 'test 2'}
+
 
     def test_tweet_db(self):
         mock_cursor = Mock()
@@ -149,17 +153,45 @@ class TestDB(TestCase):
             )
         mock_cursor.fetchall.assert_not_called()
 
+    @patch('db_ops.DictCursor')
     @patch('db_ops.play_db')
     @patch('db_ops.db_cursor')
-    def test_query_play(self, mock_cursor, mock_play):
-        test_config = {'test 1': 'test 2'}
+    def test_query_play(self, mock_db_cursor, mock_play, mock_dict_cursor):
         test_query_string = 'test query string'
         test_lookup_term = 'test term'
 
+        mock_play.return_value = self.mock_result
+
+        mock_cursor = Mock()
+        mock_db_cursor.return_value.__enter__.return_value = mock_cursor
+
         test_result = query_play(
-            test_config, test_query_string, test_lookup_term
+            self.config, test_query_string, test_lookup_term
             )
         self.assertEqual(test_result, self.mock_result)
+
+        mock_db_cursor.assert_called_once_with(
+            self.config, cursorclass=mock_dict_cursor
+            )
+        mock_play.assert_called_once_with(
+            mock_cursor, test_query_string, test_lookup_term
+            )
+
+    @patch('db_ops.query_play')
+    def test_query_by_wicks_id(self, mock_query):
+        test_wicks_id = 9999
+        target_query_string = '{}\nWHERE wicks = %s\n{}'.format(
+            PLAY_SELECT, NOT_TWEETED_CONDITION
+            )
+
+        mock_query.return_value = self.mock_result
+
+        test_result = query_by_wicks_id(self.config, test_wicks_id)
+
+        self.assertEqual(test_result, self.mock_result)
+        mock_query.assert_called_once_with(
+            self.config, target_query_string, test_wicks_id
+            )
 
 
 if __name__ == '__main__':
