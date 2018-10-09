@@ -1,6 +1,8 @@
+from datetime import datetime
 from unittest import TestCase, main
 from unittest.mock import Mock, patch
 
+from dateutil import relativedelta
 from MySQLdb import DatabaseError
 
 from db_ops import(
@@ -23,6 +25,9 @@ class TestQuery(TestCase):
             ('test 1a', 'test 2a', 'test 3a', 5)
             ]
         self.config = {'test 1': 'test 2'}
+        self.date = datetime.now().date() + relativedelta.relativedelta(
+            years=-200
+            )
 
 
     def test_tweet_db(self):
@@ -191,6 +196,74 @@ class TestQuery(TestCase):
         self.assertEqual(test_result, self.mock_result)
         mock_query.assert_called_once_with(
             self.config, target_query_string, test_wicks_id
+            )
+
+    @patch('db_ops.query_play')
+    def test_query_by_wicks_id_tweeted(self, mock_query):
+        test_wicks_id = 9999
+        target_query_string = '{}\nWHERE wicks = %s\n'.format(
+            PLAY_SELECT
+            )
+
+        mock_query.return_value = self.mock_result
+
+        test_result = query_by_wicks_id(
+            self.config, test_wicks_id, tweeted=True
+            )
+
+        self.assertEqual(test_result, self.mock_result)
+        mock_query.assert_called_once_with(
+            self.config, target_query_string, test_wicks_id
+            )
+
+    @patch('db_ops.query_play')
+    def test_query_by_date(self, mock_query):
+        test_date = self.date
+        target_query_string = '{}\nWHERE greg_date = %s\n{}\n'.format(
+            PLAY_SELECT, NOT_TWEETED_CONDITION
+            )
+
+        mock_query.return_value = self.mock_result
+
+        test_result = query_by_date(self.config, test_date)
+
+        self.assertEqual(test_result, self.mock_result)
+        mock_query.assert_called_once_with(
+            self.config, target_query_string, test_date.isoformat()
+            )
+
+    @patch('db_ops.query_play')
+    def test_query_by_date_limit(self, mock_query):
+        test_date = self.date
+        target_query_string = '{}\nWHERE greg_date = %s\n{}\nLIMIT 1'.format(
+            PLAY_SELECT, NOT_TWEETED_CONDITION
+            )
+
+        mock_query.return_value = self.mock_result
+
+        test_result = query_by_date(self.config, test_date, limit=500)
+
+        self.assertEqual(test_result, self.mock_result)
+        mock_query.assert_called_once_with(
+            self.config, target_query_string, test_date.isoformat()
+            )
+
+    @patch('db_ops.query_play')
+    def test_query_by_date_tweeted(self, mock_query):
+        target_query_string = '{}\nWHERE greg_date = %s\n\n'.format(
+            PLAY_SELECT
+            )
+        test_date = self.date
+
+        mock_query.return_value = self.mock_result
+
+        test_result = query_by_date(
+            self.config, test_date, tweeted=True
+            )
+
+        self.assertEqual(test_result, self.mock_result)
+        mock_query.assert_called_once_with(
+            self.config, target_query_string, test_date.isoformat()
             )
 
 
