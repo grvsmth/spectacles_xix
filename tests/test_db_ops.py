@@ -1,5 +1,5 @@
 from unittest import TestCase, main
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from MySQLdb import DatabaseError
 
@@ -14,6 +14,12 @@ from db_ops import(
     )
 
 class TestDB(TestCase):
+
+    def setUp(self):
+        self.mock_result = [
+            ('test 1', 'test 2', 'test 3', 4),
+            ('test 1a', 'test 2a', 'test 3a', 5)
+            ]
 
     def test_tweet_db(self):
         mock_cursor = Mock()
@@ -94,17 +100,12 @@ class TestDB(TestCase):
         test_query_string = 'query string'
         test_lookup_term = 'lookup term'
 
-        mock_result = [
-            ('test 1', 'test 2', 'test 3', 4),
-            ('test 1a', 'test 2a', 'test 3a', 5)
-            ]
-
         mock_cursor = Mock()
-        mock_cursor.fetchall.return_value = mock_result
+        mock_cursor.fetchall.return_value = self.mock_result
 
         test_result = play_db(mock_cursor, test_query_string, test_lookup_term)
 
-        self.assertEqual(mock_result, test_result)
+        self.assertEqual(self.mock_result, test_result)
         mock_cursor.execute.assert_called_once_with(
             test_query_string, [test_lookup_term]
             )
@@ -148,6 +149,17 @@ class TestDB(TestCase):
             )
         mock_cursor.fetchall.assert_not_called()
 
+    @patch('db_ops.play_db')
+    @patch('db_ops.db_cursor')
+    def test_query_play(self, mock_cursor, mock_play):
+        test_config = {'test 1': 'test 2'}
+        test_query_string = 'test query string'
+        test_lookup_term = 'test term'
+
+        test_result = query_play(
+            test_config, test_query_string, test_lookup_term
+            )
+        self.assertEqual(test_result, self.mock_result)
 
 
 if __name__ == '__main__':
