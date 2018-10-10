@@ -144,7 +144,6 @@ def expand_abbreviation(cursor, phrase):
         abbreviation = mo.group(1)
 
         expansion = abbreviation_db(cursor, abbreviation)
-
         if expansion:
             replacements.add((abbreviation, expansion))
 
