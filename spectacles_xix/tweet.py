@@ -15,9 +15,9 @@ from dateutil import relativedelta
 import pytz
 from twitter import Twitter, OAuth
 
-from play import Play
-from check_books import check_books_api, BookResult
-from db_ops import(
+from spectacles_xix.play import Play
+from spectacles_xix.check_books import check_books_api, BookResult
+from spectacles_xix.db_ops import(
     db_cursor, query_by_wicks_id, query_by_date, abbreviation_db, tweet_db
     )
 
@@ -134,14 +134,14 @@ def expand_abbreviation(cursor, phrase):
     Look up abbreviation expansion in the database
     """
     # Find abbreviated words and iterate through them
-    abbrev_match = finditer('(\w+)\.', phrase)
+    abbrev_match = finditer(r'(\w+)\.', phrase)
     if not abbrev_match:
         return phrase
 
     replacements = set()
 
-    for mo in abbrev_match:
-        abbreviation = mo.group(1)
+    for match_object in abbrev_match:
+        abbreviation = match_object.group(1)
 
         expansion = abbreviation_db(cursor, abbreviation)
         if expansion:
@@ -201,7 +201,6 @@ if __name__ == '__main__':
         PLAY = Play.from_dict(PLAY_LIST[0])
         PLAY.set_today(get_date())
         PLAY.set_expanded_genre(EXPANDED_GENRE)
-        PLAY.build_phrases()
         LOG.info(PLAY)
 
         BOOK_RESULT = BookResult()

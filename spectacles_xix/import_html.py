@@ -8,10 +8,11 @@ import sys
 from pathlib import Path
 
 import MySQLdb
+from _mysql_exceptions import DatabaseError
 from bs4 import BeautifulSoup
 
 CONFIG_PATH = 'spectacles_xix/config'
-DATE_REGEX = '\d{4}-\d{1-2}-\d{1-2}'
+DATE_REGEX = r'\d{4}-\d{1-2}-\d{1-2}'
 
 def load_config():
     """
@@ -41,11 +42,11 @@ def save_to_db(config, list_data):
         """
 
     with MySQLdb.connect(
-        config['db']['host'],
-        config['db']['user'],
-        config['db']['password'],
-        config['db']['db'],
-        charset='utf8'
+            config['db']['host'],
+            config['db']['user'],
+            config['db']['password'],
+            config['db']['db'],
+            charset='utf8'
         ) as cursor:
 
         cursor.execute('SET NAMES utf8;')
@@ -54,7 +55,7 @@ def save_to_db(config, list_data):
         try:
             print("Inserting {} rows".format(len(list_data)))
             cursor.executemany(tableq, list_data)
-        except MySQLdb.DatabaseError as err:
+        except DatabaseError as err:
             print("Error inserting: {}".format(err))
 
 
@@ -66,6 +67,9 @@ def load_html(filename):
 
 
 def datify(in_string):
+    """
+    Turn a string into a datetime object, catching errors
+    """
     out_data = in_string
     if in_string:
         try:
@@ -75,6 +79,7 @@ def datify(in_string):
         except TypeError as err:
             print("Invalid date ({}): {}".format(in_string, err))
     return out_data
+
 
 def parse_row(in_row):
     """

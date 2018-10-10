@@ -7,9 +7,10 @@ import sys
 from pathlib import Path
 
 import MySQLdb
+from _mysql_exceptions import DatabaseError
 
 CONFIG_PATH = 'spectacles_xix/config'
-DATE_REGEX = '\d{4}-\d{1-2}-\d{1-2}'
+DATE_REGEX = r'\d{4}-\d{1-2}-\d{1-2}'
 
 SQLQ = {
     'abbreviations.tsv': """INSERT INTO spectacle_abbrev
@@ -41,11 +42,11 @@ def save_to_db(config, tableq, list_data):
     """
 
     with MySQLdb.connect(
-        config['db']['host'],
-        config['db']['user'],
-        config['db']['password'],
-        config['db']['db'],
-        charset='utf8'
+            config['db']['host'],
+            config['db']['user'],
+            config['db']['password'],
+            config['db']['db'],
+            charset='utf8'
         ) as cursor:
 
         cursor.execute('SET NAMES utf8;')
@@ -54,7 +55,7 @@ def save_to_db(config, tableq, list_data):
         try:
             print("Inserting {} rows".format(len(list_data)))
             cursor.executemany(tableq, list_data)
-        except MySQLdb.DatabaseError as err:
+        except DatabaseError as err:
             print("Error inserting: {}".format(err))
 
 

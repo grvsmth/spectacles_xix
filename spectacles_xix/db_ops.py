@@ -5,11 +5,12 @@ from contextlib import contextmanager
 from datetime import datetime
 from logging import basicConfig, getLogger
 
-from MySQLdb import connect, DatabaseError
+from MySQLdb import connect
 from MySQLdb.cursors import Cursor, DictCursor
+from _mysql_exceptions import DatabaseError
 
 basicConfig(level="DEBUG")
-LOG=getLogger(__name__)
+LOG = getLogger(__name__)
 
 PLAY_SELECT = """SELECT id, wicks, title, author, genre, acts, format,
         music, spectacle_play.theater_code, theater_name, greg_date, rev_date
@@ -25,12 +26,12 @@ def db_cursor(config, cursorclass=Cursor):
     Create db cursor and yield it
     """
     with connect(
-        config['host'],
-        config['user'],
-        config['password'],
-        config['db'],
-        charset='utf8',
-        cursorclass=cursorclass
+            config['host'],
+            config['user'],
+            config['password'],
+            config['db'],
+            charset='utf8',
+            cursorclass=cursorclass
         ) as cursor:
 
         cursor.execute('SET NAMES utf8;')

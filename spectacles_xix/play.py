@@ -3,11 +3,6 @@ Play - class for storing information about plays
 """
 import locale
 
-TEMPLATE = {
-    'basic': '{0.title},{0.author_string}{0.genre_phrase}{0.music_string} a débuté{0.ce_jour_la} {0.date_string} {0.theater_string}. Wicks nº. {0.wicks}.',
-    'shorter': '{0.title}, {0.author}{0.ce_jour_la} {0.date_string} {0.theater_code}. Wicks nº. {0.wicks}.'
-    }
-
 EXPAND_FORMAT = {
     'singular': {'a': 'acte', 'tabl': 'tableau'},
     'plural': {'a': 'actes', 'tabl': 'tableaux'}
@@ -63,6 +58,10 @@ def musique_de(name):
     return music_phrase
 
 def expand_format(acts, play_format):
+    """
+    Retrieve the expanded format, depending on whether the number of acts is
+    singular or plural
+    """
     if acts == 1:
         return EXPAND_FORMAT['singular'][play_format]
 
@@ -73,8 +72,8 @@ class Play:
     """
     Store information about a play in the corpus
     """
-    def __init__(self, id, wicks):
-        self.id = id
+    def __init__(self, play_id, wicks):
+        self.play_id = play_id
         self.wicks = wicks
         self.title = ''
         self.author = ''
@@ -85,13 +84,18 @@ class Play:
         self.genre_phrase = ''
         self.music = ''
         self.rev_date = ''
+        self.date_string = ''
         self.theater_name = ''
         self.theater_code = ''
+        self.theater_string = ''
         self.ce_jour_la = ''
         self.greg_date = None
 
     @classmethod
     def from_dict(cls, row):
+        """
+        Given a dict input,
+        """
         play = cls(row['id'], row['wicks'])
 
         play.title = row.get('title')
@@ -123,7 +127,7 @@ class Play:
         if self.greg_date == today:
             self.ce_jour_la = ' #CeJourLà'
 
-    def build_expanded_genre_phrase(self):
+    def get_expanded_genre_phrase(self):
         """
         Generate genre and number of acts
         """
@@ -131,59 +135,73 @@ class Play:
         if self.expanded_genre:
             genre = self.expanded_genre
 
-        self.build_genre_phrase(genre)
+        return self.get_genre_phrase(genre)
 
-    def build_genre_phrase(self, genre=None):
+    def get_genre_phrase(self, genre=None):
         """
         Generate short genre phrase
         """
+        genre_phrase = ''
         if not genre:
             genre = self.genre
 
         if not genre:
-            return
+            return genre_phrase
 
         if self.play_format:
             expanded_format = expand_format(self.acts, self.play_format)
-            self.genre_phrase = GENRE_ACT_FORMAT_TEMPLATE.format(
+            genre_phrase = GENRE_ACT_FORMAT_TEMPLATE.format(
                 genre, self.acts, expanded_format
                 )
         else:
-            self.genre_phrase = GENRE_TEMPLATE.format(genre)
+            genre_phrase = GENRE_TEMPLATE.format(genre)
+
+        return genre_phrase
 
     def build_theater_string(self):
+        """
+        Run the theater name through au_theater(), or the code if there is no
+        name found
+        """
         if self.theater_name:
             self.theater_string = au_theater(self.theater_name)
         else:
             self.theater_string = au_theater(self.theater_code)
 
-    def build_phrases(self):
-        """
-        Expand theater, music and author into tweet-friendly strings
-        """
-        self.date_string = self.greg_date.strftime(DATE_FORMAT)
-        self.music_string = musique_de(self.music)
-        self.author_string = par_auteur(self.author)
-        self.build_theater_string()
-        self.build_expanded_genre_phrase()
-
     def __repr__(self):
         """
         Generate description for tweet
         """
-        self.description = TEMPLATE['basic'].format(self)
-        if len(self.description) > 280:
-            print("Description for play {} is too long ({} characters)".format(
-                self.id,
-                len(self.description)
-                ))
-            self.build_genre_phrase()
-            self.description = TEMPLATE['basic'].format(self)
-        if len(self.description) > 280:
-            print("Description for play {} is STILL too long ({} characters)".format(
-                self.id,
-                len(self.description)
-                ))
-            self.description = TEMPLATE['shorter'].format(self)
+        basic_template = '{title},{author_string}{genre_phrase}{music_string} a\
+    débuté{ce_jour_la} {date_string} {theater_string}. Wicks nº. {wicks}.'
+        play_dict = {
+            'title': self.title,
+            'author_string': par_auteur(self.author),
+            'genre_phrase': self.get_expanded_genre_phrase(),
+            'music_string': musique_de(self.music),
+            'ce_jour_la': self.ce_jour_la,
+            'date_string': self.greg_date.strftime(DATE_FORMAT),
+            'theater_string': self.get_theater_string(),
+            'wicks': self.wicks
+            }
 
-        return self.description
+        description = basic_template.format(play_dict)
+        if len(description) > 280:
+            print("Description for play {} is too long ({} characters)".format(
+                self.play_id,
+                len(description)
+                ))
+            play_dict['genre_phrase'] = self.get_genre_phrase()
+            description = basic_template.format(play_dict)
+
+        if len(description) > 280:
+            print("Description for {} is STILL too long ({} characters)".format(
+                self.play_id,
+                len(description)
+                ))
+            shorter_template = '{title}, {author}{ce_jour_la} {date_string}\
+    {theater_code}. Wicks nº. {wicks}.'
+            play_dict['theater_code'] = self.theater_code
+            description = shorter_template.format(play_dict)
+
+        return description

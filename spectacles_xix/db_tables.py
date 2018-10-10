@@ -6,20 +6,21 @@ import json
 from pathlib import Path
 
 import MySQLdb
+from _mysql_exceptions import DatabaseError
 
 CONFIG_PATH = 'spectacles_xix/config'
-
 CONFIG = {}
 
+
 # load config
-config_path = Path(Path.home(), CONFIG_PATH)
-for cfile in config_path.glob('*.json'):
+CONFIG_PATH = Path(Path.home(), CONFIG_PATH)
+for cfile in CONFIG_PATH.glob('*.json'):
     config_name = cfile.stem
     with cfile.open() as cfh:
         CONFIG[config_name] = json.load(cfh)
 
 # create tables
-table_sql = {
+TABLE_SQL = {
     'theater': """CREATE TABLE spectacle_theater (
         theater_code varchar(10) NOT NULL,
         theater_name varchar(40) NOT NULL,
@@ -52,16 +53,15 @@ table_sql = {
 }
 
 with MySQLdb.connect(
-    CONFIG['db']['host'],
-    CONFIG['db']['user'],
-    CONFIG['db']['password'],
-    CONFIG['db']['db']
+        CONFIG['db']['host'],
+        CONFIG['db']['user'],
+        CONFIG['db']['password'],
+        CONFIG['db']['db']
     ) as cursor:
 
-    for name, tableq in table_sql.items():
+    for name, tableq in TABLE_SQL.items():
         try:
             print("Creating table {}".format(name))
             cursor.execute(tableq)
-        except MySQLdb.DatabaseError as err:
+        except DatabaseError as err:
             print("Error creating table {}: {}".format(name, err))
-
