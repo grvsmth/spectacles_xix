@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="spectacles_xix",
-    version="0.0.2",
+    version="0.0.3",
     author="Angus B. Grieve-Smith",
     author_email="angus@grieve-smith.com",
     description="Twitter bot to tweet play records from a database",
