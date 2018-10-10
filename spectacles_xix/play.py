@@ -1,19 +1,28 @@
 """
 Play - class for storing information about plays
 """
-import locale
+from locale import LC_TIME, setlocale
+from logging import basicConfig, getLogger
 
 EXPAND_FORMAT = {
     'singular': {'a': 'acte', 'tabl': 'tableau'},
     'plural': {'a': 'actes', 'tabl': 'tableaux'}
 }
 
+BASIC_TEMPLATE = '{title},{author_string}{genre_phrase}{music_string} a\
+ débuté{ce_jour_la} {date_string} {theater_string}. Wicks nº. {wicks}.'
+SHORTER_TEMPLATE = '{title}, {author}{ce_jour_la} {date_string} {theater_code}.\
+ Wicks nº. {wicks}.'
+
 GENRE_TEMPLATE = " {},"
 GENRE_ACT_FORMAT_TEMPLATE = " {} en {} {},"
 
 TIMEZONE = 'Europe/Paris'
 DATE_FORMAT = "%A le %d %B %Y"
-locale.setlocale(locale.LC_TIME, "fr_FR")
+setlocale(LC_TIME, "fr_FR")
+
+basicConfig(level="DEBUG")
+LOG = getLogger(__name__)
 
 
 def au_theater(name):
@@ -158,22 +167,21 @@ class Play:
 
         return genre_phrase
 
-    def build_theater_string(self):
+    def get_theater_string(self):
         """
         Run the theater name through au_theater(), or the code if there is no
         name found
         """
         if self.theater_name:
-            self.theater_string = au_theater(self.theater_name)
-        else:
-            self.theater_string = au_theater(self.theater_code)
+            return au_theater(self.theater_name)
 
-    def __repr__(self):
+        return au_theater(self.theater_code)
+
+    def get_dict(self):
         """
-        Generate description for tweet
+        Generate a dictionary of values that can be used as input to a format
+        string for __repr__()
         """
-        basic_template = '{title},{author_string}{genre_phrase}{music_string} a\
-    débuté{ce_jour_la} {date_string} {theater_string}. Wicks nº. {wicks}.'
         play_dict = {
             'title': self.title,
             'author_string': par_auteur(self.author),
@@ -184,24 +192,29 @@ class Play:
             'theater_string': self.get_theater_string(),
             'wicks': self.wicks
             }
+        return play_dict
 
-        description = basic_template.format(play_dict)
+    def __repr__(self):
+        """
+        Generate description for tweet
+        """
+        play_dict = self.get_dict()
+        description = BASIC_TEMPLATE.format(**play_dict)
         if len(description) > 280:
             print("Description for play {} is too long ({} characters)".format(
                 self.play_id,
                 len(description)
                 ))
             play_dict['genre_phrase'] = self.get_genre_phrase()
-            description = basic_template.format(play_dict)
+            description = BASIC_TEMPLATE.format(**play_dict)
 
         if len(description) > 280:
             print("Description for {} is STILL too long ({} characters)".format(
                 self.play_id,
                 len(description)
                 ))
-            shorter_template = '{title}, {author}{ce_jour_la} {date_string}\
-    {theater_code}. Wicks nº. {wicks}.'
+
             play_dict['theater_code'] = self.theater_code
-            description = shorter_template.format(play_dict)
+            description = SHORTER_TEMPLATE.format(**play_dict)
 
         return description
