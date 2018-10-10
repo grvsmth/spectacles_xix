@@ -1,7 +1,7 @@
 from unittest import TestCase, main
 from unittest.mock import patch
 
-from tweet import check_by_date
+from spectacles_xix.tweet import check_by_date
 
 
 class TestTweet(TestCase):

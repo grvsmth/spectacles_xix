@@ -3,7 +3,7 @@ from datetime import datetime
 from unittest import TestCase, main
 from unittest.mock import call, patch
 
-from play import(
+from spectacles_xix.play import(
     EXPAND_FORMAT, GENRE_TEMPLATE, GENRE_ACT_FORMAT_TEMPLATE, TEMPLATE,
     au_theater, expand_format, par_auteur, musique_de, Play
     )
@@ -148,7 +148,7 @@ class TestPlay(TestCase):
 
         self.assertEqual(self.play.genre_phrase, target_genre_phrase)
 
-    @patch('play.au_theater')
+    @patch('spectacles_xix.play.au_theater')
     def test_build_theater_string_from_name(self, mock_au_theater):
         test_name = 'test name'
         test_code = 'test code'
@@ -164,7 +164,7 @@ class TestPlay(TestCase):
         self.assertEqual(self.play.theater_string, test_theater_string)
         mock_au_theater.assert_called_once_with(test_name)
 
-    @patch('play.au_theater')
+    @patch('spectacles_xix.play.au_theater')
     def test_build_theater_string_from_code(self, mock_au_theater):
         test_name = ''
         test_code = 'test code'
@@ -180,7 +180,7 @@ class TestPlay(TestCase):
         self.assertEqual(self.play.theater_string, test_theater_string)
         mock_au_theater.assert_called_once_with(test_code)
 
-    @patch('play.Play.build_genre_phrase')
+    @patch('spectacles_xix.play.Play.build_genre_phrase')
     def test_build_expanded_genre_phrase_not_really(self, mock_build):
         test_genre = 'op'
         test_expanded_genre = ''
@@ -191,7 +191,7 @@ class TestPlay(TestCase):
 
         mock_build.assert_called_once_with(test_genre)
 
-    @patch('play.Play.build_genre_phrase')
+    @patch('spectacles_xix.play.Play.build_genre_phrase')
     def test_build_expanded_genre_phrase(self, mock_build):
         test_genre = 'op'
         test_expanded_genre = 'opéraa'
@@ -202,7 +202,7 @@ class TestPlay(TestCase):
 
         mock_build.assert_called_once_with(test_expanded_genre)
 
-    @patch('play.expand_format')
+    @patch('spectacles_xix.play.expand_format')
     def test_build_genre_phrase_with_format(self, mock_expand):
         test_genre = 'foo'
         test_format = 'a'
@@ -223,7 +223,7 @@ class TestPlay(TestCase):
         self.assertEqual(self.play.genre_phrase, target_genre_phrase)
         mock_expand.assert_called_once_with(test_acts, test_format)
 
-    @patch('play.expand_format')
+    @patch('spectacles_xix.play.expand_format')
     def test_build_genre_phrase_provided_with_format(self, mock_expand):
         test_genre = 'foo'
         test_format = 'tabl'
@@ -242,10 +242,10 @@ class TestPlay(TestCase):
         self.assertEqual(self.play.genre_phrase, target_genre_phrase)
         mock_expand.assert_called_once_with(test_acts, test_format)
 
-    @patch('play.Play.build_expanded_genre_phrase')
-    @patch('play.par_auteur')
-    @patch('play.musique_de')
-    @patch('play.au_theater')
+    @patch('spectacles_xix.play.Play.build_expanded_genre_phrase')
+    @patch('spectacles_xix.play.par_auteur')
+    @patch('spectacles_xix.play.musique_de')
+    @patch('spectacles_xix.play.au_theater')
     def test_build_phrases(self, m_au, m_musique, m_par, m_build):
         target_date_string = 'samedi le 03 octobre 1818'
 
@@ -284,14 +284,14 @@ class TestRepr(TestCase):
         self.test_play = Play.from_dict(TEST_DICT)
         self.test_play.build_phrases()
 
-    @patch('play.Play.build_genre_phrase')
+    @patch('spectacles_xix.play.Play.build_genre_phrase')
     def test_repr(self, mock_build):
         target_description = TEMPLATE['basic'].format(self.test_play)
         test_description = str(self.test_play)
         self.assertEqual(test_description, target_description)
         mock_build.assert_not_called()
 
-    @patch('play.Play.build_genre_phrase')
+    @patch('spectacles_xix.play.Play.build_genre_phrase')
     def test_repr_greater_than_280(self, mock_build):
         self.test_play.title = 'La pièce avec le très très très très très très très long titre'
         self.test_play.build_phrases()
@@ -300,7 +300,7 @@ class TestRepr(TestCase):
         self.assertEqual(test_description, target_description)
         mock_build.assert_called_once_with(TEST_DICT['genre'])
 
-    @patch('play.Play.build_genre_phrase')
+    @patch('spectacles_xix.play.Play.build_genre_phrase')
     def test_repr_greater_than_280_with_short_genre(self, mock_build):
         self.test_play.title = 'La pièce avec le très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très long titre'
         self.test_play.build_phrases()
