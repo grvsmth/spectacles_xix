@@ -201,20 +201,20 @@ class Play:
         play_dict = self.get_dict()
         description = BASIC_TEMPLATE.format(**play_dict)
         if len(description) > 280:
-            print("Description for play {} is too long ({} characters)".format(
+            LOG.warning("Description for play {} is too long ({} characters)".format(
                 self.play_id,
                 len(description)
                 ))
             play_dict['genre_phrase'] = self.get_genre_phrase()
             description = BASIC_TEMPLATE.format(**play_dict)
 
-        if len(description) > 280:
-            print("Description for {} is STILL too long ({} characters)".format(
-                self.play_id,
-                len(description)
-                ))
+            if len(description) > 280:
+                LOG.warning("Description for {} is STILL too long ({} characters)".format(
+                    self.play_id,
+                    len(description)
+                    ))
 
-            play_dict['theater_code'] = self.theater_code
-            description = SHORTER_TEMPLATE.format(**play_dict)
+                play_dict['theater_code'] = self.theater_code
+                description = SHORTER_TEMPLATE.format(**play_dict)
 
         return description

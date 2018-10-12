@@ -181,7 +181,7 @@ class TestPlay(TestCase):
         self.assertEqual(test_string, mock_theater_string)
         mock_au_theater.assert_called_once_with(test_code)
 
-    @patch('spectacles_xix.play.Play.build_genre_phrase')
+    @patch('spectacles_xix.play.Play.get_genre_phrase')
     def test_get_expanded_genre_phrase_not_really(self, mock_build):
         test_genre = 'op'
         test_expanded_genre = ''
@@ -192,7 +192,7 @@ class TestPlay(TestCase):
 
         mock_build.assert_called_once_with(test_genre)
 
-    @patch('spectacles_xix.play.Play.build_genre_phrase')
+    @patch('spectacles_xix.play.Play.get_genre_phrase')
     def test_get_expanded_genre_phrase(self, mock_build):
         test_genre = 'op'
         test_expanded_genre = 'opéraa'
@@ -248,31 +248,59 @@ class TestRepr(TestCase):
 
     def setUp(self):
         self.test_play = Play.from_dict(TEST_DICT)
-        self.test_dict = deepcopy(TEST_DICT)
+        self.test_dict = {
+            'author_string': ' par ' + TEST_DICT['author'] + ',',
+            'genre_phrase': ' opéra-comique en 3 tableaux,',
+            'music_string': '',
+            'ce_jour_la': '#CeJourLà',
+            'date_string': 'samedi le 1 janvier 1818',
+            'theater_string': ' au Théâtre du Marais'
+            }
+        self.test_dict.update(TEST_DICT)
 
     @patch('spectacles_xix.play.Play.get_genre_phrase')
     @patch('spectacles_xix.play.Play.get_dict')
     def test_repr(self, mock_get_dict, mock_get_genre_phrase):
         target_description = BASIC_TEMPLATE.format(**self.test_dict)
+        mock_get_dict.return_value = self.test_dict
         test_description = str(self.test_play)
         self.assertEqual(test_description, target_description)
         mock_get_genre_phrase.assert_not_called()
 
     @patch('spectacles_xix.play.Play.get_genre_phrase')
-    def test_repr_greater_than_280(self, mock_build):
-        self.test_play.title = 'La pièce avec le très très très très très très très long titre'
-        target_description = BASIC_TEMPLATE.format(**TEST_DICT)
-        test_description = str(self.test_play)
+    @patch('spectacles_xix.play.Play.get_dict')
+    def test_repr_greater_than_280(self, mock_dict, mock_gp):
+        test_genre_phrase = ' op.-com.,'
+        self.test_dict['title'] = 'La pièce avec le très très très très très\
+        très très très très très très très très très très très très très \
+        long titre'
+        self.test_dict['music_string'] = ' musique de Wolfgang Amadeus Mozart;'
+        mock_dict.return_value = self.test_dict
+        mock_gp.return_value = test_genre_phrase
+
+        target_dict = deepcopy(self.test_dict)
+        target_dict['genre_phrase'] = test_genre_phrase
+
+        target_description = BASIC_TEMPLATE.format(**target_dict)
+        with self.assertLogs(level="WARNING"):
+            test_description = str(self.test_play)
         self.assertEqual(test_description, target_description)
-        mock_build.assert_called_once_with(TEST_DICT['genre'])
+        mock_gp.assert_called_once_with()
 
     @patch('spectacles_xix.play.Play.get_genre_phrase')
-    def test_repr_greater_than_280_with_short_genre(self, mock_build):
-        self.test_play.title = 'La pièce avec le très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très très long titre'
-        target_description = SHORTER_TEMPLATE.format(**TEST_DICT)
-        test_description = str(self.test_play)
+    @patch('spectacles_xix.play.Play.get_dict')
+    def test_repr_greater_than_280_with_short_genre(self, mock_dict, mock_gp):
+        self.test_dict['title'] = 'La pièce avec le très très très très très\
+        très très très très très très très très très très très très très très\
+        très très très très très très très très très très très très très très\
+        très très très très long titre'
+        mock_dict.return_value = self.test_dict
+
+        target_description = SHORTER_TEMPLATE.format(**self.test_dict)
+        with self.assertLogs(level="WARNING"):
+            test_description = str(self.test_play)
         self.assertEqual(test_description, target_description)
-        mock_build.assert_has_calls([call(TEST_DICT['genre']), call()])
+        mock_gp.assert_called_once_with()
 
 
 if __name__ == '__main__':
