@@ -30,8 +30,6 @@ TIMEZONE = 'Europe/Paris'
 DATE_FORMAT = "%A le %d %B %Y"
 setlocale(LC_TIME, "fr_FR")
 
-LOCAL_NOW = timezone(TIMEZONE).localize(datetime.now())
-
 basicConfig(level="DEBUG")
 LOG = getLogger(__name__)
 
@@ -66,20 +64,21 @@ def load_config():
     return config
 
 
-def get_date(date_string=None):
+def get_date_object(date_string):
     """
-    Convert a date string into a date object, or generate a date object in the
-    nineteenth century
+    Convert a date string into a date object, or
     """
-    if date_string:
-        our_date = datetime.strptime(date_string, "%d-%m-%Y").date()
-    else:
-        our_date = LOCAL_NOW.date() + relativedelta.relativedelta(years=-200)
-
-    return our_date
+    return datetime.strptime(date_string, "%d-%m-%Y").date()
 
 
-def time_to_tweet(play_count):
+def get_200_years_ago(local_now):
+    """
+    Generate a date object in the nineteenth century
+    """
+    return local_now.date() + relativedelta.relativedelta(years=-200)
+
+
+def time_to_tweet(local_now, play_count):
     """
     Determine whether this is a good time to tweet
     """
@@ -87,7 +86,7 @@ def time_to_tweet(play_count):
         LOG.info("No plays: %s", play_count)
         return False
 
-    this_hour = LOCAL_NOW.hour
+    this_hour = local_now.hour
     hours_remaining = 23 - this_hour
     hours_per_tweet = hours_remaining / play_count
     LOG.info(
@@ -178,13 +177,13 @@ def expand_abbreviation(cursor, phrase):
     return phrase
 
 
-def check_by_date(config, args_date, tweeted):
+def check_by_date(config, local_now, args_date, tweeted):
     """
     Given a config dict, a date and whether to search already tweeted plays,
     check for plays with the given date.  If there are non, check from the first
     of the month.
     """
-    today_date = get_date(args_date)
+    today_date = get_date_object(args_date)
     play_list = query_by_date(config, today_date, tweeted)
 
     if not play_list:
@@ -196,31 +195,47 @@ def check_by_date(config, args_date, tweeted):
     return play_list
 
 
+def get_play(cursor, local_now, play_dict):
+    """
+    Given a database cursor, the current time and a dict of play info, return
+    a play object
+    """
+    old_date = get_200_years_ago(local_now)
+    expanded_genre = expand_abbreviation(cursor, play_dict['genre'])
+
+    play = Play.from_dict(play_dict)
+    play.set_today(old_date)
+    play.set_expanded_genre(expanded_genre)
+
+    LOG.info(play)
+    return play
+
+
 def main():
     """
     """
     args = parse_command_args()
     config = load_config()
 
+    local_now = timezone(TIMEZONE).localize(datetime.now())
+
     if args.wicks:
         play_list = query_by_wicks_id(config['db'], args.wicks, args.tweeted)
     else:
-        play_list = check_by_date(config['db'], args.date, args.tweeted)
+        play_list = check_by_date(
+            config['db'], local_now, args.date, args.tweeted
+            )
 
     if not play_list:
         exit(0)
 
     if not args.no_tweet and not args.force and not time_to_tweet(
-        len(play_list)
+        local_now, len(play_list),
         ):
         exit(0)
 
     with db_cursor(config['db']) as cursor:
-        play = Play.from_dict(play_list[0])
-        play.set_today(get_date())
-        expanded_genre = expand_abbreviation(cursor, play_list[0]['genre'])
-        play.set_expanded_genre(expanded_genre)
-        LOG.info(play)
+        play = get_play(cursor, local_now, play_list[0])
 
         book_result = BookResult()
         if args.book:
@@ -239,6 +254,8 @@ def main():
         if 'id' in status:
             LOG.info("Sent tweet ID# %s", status['id'])
             tweet_db(cursor, play_list[0]['id'])
+        else:
+            LOG.error(status)
 
 if __name__ == '__main__':
     main()
