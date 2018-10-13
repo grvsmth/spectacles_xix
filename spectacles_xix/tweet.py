@@ -183,7 +183,11 @@ def check_by_date(config, local_now, args_date, tweeted):
     check for plays with the given date.  If there are non, check from the first
     of the month.
     """
-    today_date = get_date_object(args_date)
+    if args_date:
+        today_date = get_date_object(args_date)
+    else:
+        today_date = get_200_years_ago(local_now)
+
     play_list = query_by_date(config, today_date, tweeted)
 
     if not play_list:
@@ -213,6 +217,8 @@ def get_play(cursor, local_now, play_dict):
 
 def main():
     """
+    Parse arguments, load config, get current date, get play list, get play,
+    check for book link, tweet
     """
     args = parse_command_args()
     config = load_config()
