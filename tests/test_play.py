@@ -1,7 +1,7 @@
 from copy import deepcopy
 from datetime import datetime
 from unittest import TestCase, main
-from unittest.mock import call, patch
+from unittest.mock import patch
 
 from spectacles_xix.play import(
     EXPAND_FORMAT, GENRE_TEMPLATE, GENRE_ACT_FORMAT_TEMPLATE,
@@ -10,7 +10,7 @@ from spectacles_xix.play import(
     )
 
 TEST_DICT = {
-    'id': 999,
+    'play_id': 999,
     'wicks': 9999,
     'author': 'Foo & Bar',
     'title': 'Arlequin le Baz',
@@ -95,7 +95,7 @@ class TestPlay(TestCase):
 
     def test_init(self):
         test_play = Play(self.test_id, self.test_wicks)
-        self.assertEqual(self.test_id, test_play.id)
+        self.assertEqual(self.test_id, test_play.play_id)
         self.assertEqual(self.test_wicks, test_play.wicks)
 
     def test_from_dict(self):

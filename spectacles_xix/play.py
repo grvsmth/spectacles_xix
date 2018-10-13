@@ -93,10 +93,8 @@ class Play:
         self.genre_phrase = ''
         self.music = ''
         self.rev_date = ''
-        self.date_string = ''
         self.theater_name = ''
         self.theater_code = ''
-        self.theater_string = ''
         self.ce_jour_la = ''
         self.greg_date = None
 
@@ -105,7 +103,7 @@ class Play:
         """
         Given a dict input,
         """
-        play = cls(row['id'], row['wicks'])
+        play = cls(row['play_id'], row['wicks'])
 
         play.title = row.get('title')
         play.author = row.get('author')
@@ -201,18 +199,22 @@ class Play:
         play_dict = self.get_dict()
         description = BASIC_TEMPLATE.format(**play_dict)
         if len(description) > 280:
-            LOG.warning("Description for play {} is too long ({} characters)".format(
-                self.play_id,
-                len(description)
-                ))
+            LOG.warning(
+                "Description for play {} is too long ({} characters)".format(
+                    self.play_id,
+                    len(description)
+                    )
+                )
             play_dict['genre_phrase'] = self.get_genre_phrase()
             description = BASIC_TEMPLATE.format(**play_dict)
 
             if len(description) > 280:
-                LOG.warning("Description for {} is STILL too long ({} characters)".format(
-                    self.play_id,
-                    len(description)
-                    ))
+                LOG.warning(
+                    "Description for {} is STILL too long ({} characters)".format(
+                        self.play_id,
+                        len(description)
+                        )
+                    )
 
                 play_dict['theater_code'] = self.theater_code
                 description = SHORTER_TEMPLATE.format(**play_dict)
