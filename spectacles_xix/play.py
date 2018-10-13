@@ -66,6 +66,7 @@ def musique_de(name):
 
     return music_phrase
 
+
 def expand_format(acts, play_format):
     """
     Retrieve the expanded format, depending on whether the number of acts is
@@ -90,7 +91,6 @@ class Play:
         self.play_format = ''
         self.genre = ''
         self.expanded_genre = ''
-        self.genre_phrase = ''
         self.music = ''
         self.rev_date = ''
         self.theater_name = ''
@@ -123,7 +123,6 @@ class Play:
         Set the genre
         """
         self.expanded_genre = expanded_genre
-
 
     def set_today(self, today):
         """
@@ -200,20 +199,18 @@ class Play:
         description = BASIC_TEMPLATE.format(**play_dict)
         if len(description) > 280:
             LOG.warning(
-                "Description for play {} is too long ({} characters)".format(
-                    self.play_id,
-                    len(description)
-                    )
+                "Description for play %s is too long (%s characters)",
+                self.play_id,
+                len(description)
                 )
             play_dict['genre_phrase'] = self.get_genre_phrase()
             description = BASIC_TEMPLATE.format(**play_dict)
 
             if len(description) > 280:
                 LOG.warning(
-                    "Description for {} is STILL too long ({} characters)".format(
-                        self.play_id,
-                        len(description)
-                        )
+                    "Description for play %s is STILL too long (%s chars)",
+                    self.play_id,
+                    len(description)
                     )
 
                 play_dict['theater_code'] = self.theater_code
