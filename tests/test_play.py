@@ -10,7 +10,7 @@ from spectacles_xix.play import(
     )
 
 TEST_DICT = {
-    'play_id': 999,
+    'id': 999,
     'wicks': 9999,
     'author': 'Foo & Bar',
     'title': 'Arlequin le Baz',
@@ -101,6 +101,7 @@ class TestPlay(TestCase):
     def test_from_dict(self):
         in_dict = TEST_DICT
         out_dict = deepcopy(TEST_DICT)
+        out_dict['play_id'] = out_dict.pop('id')
         out_dict['play_format'] = out_dict.pop('format')
         out_dict['expanded_genre'] = ''
         play = Play.from_dict(in_dict)

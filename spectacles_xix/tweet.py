@@ -2,22 +2,21 @@
 Spectacles_XIX - Twitter bot to tweet announcements for performances in Paris
 theaters from 200 years ago
 """
-
-import argparse
+from argparse import ArgumentParser
 from datetime import datetime
 import json
-import locale
+from locale import LC_TIME, setlocale
 from logging import basicConfig, getLogger
 from pathlib import Path
 from re import finditer
 
 from dateutil import relativedelta
-import pytz
+from pytz import timezone
 from twitter import Twitter, OAuth
 
-from spectacles_xix.play import Play
-from spectacles_xix.check_books import check_books_api, BookResult
-from spectacles_xix.db_ops import(
+from play import Play
+from check_books import check_books_api, BookResult
+from db_ops import(
     db_cursor, query_by_wicks_id, query_by_date, abbreviation_db, tweet_db
     )
 
@@ -29,12 +28,28 @@ from spectacles_xix.db_ops import(
 CONFIG_PATH = 'spectacles_xix/config'
 TIMEZONE = 'Europe/Paris'
 DATE_FORMAT = "%A le %d %B %Y"
-locale.setlocale(locale.LC_TIME, "fr_FR")
+setlocale(LC_TIME, "fr_FR")
 
-LOCAL_NOW = pytz.timezone(TIMEZONE).localize(datetime.now())
+LOCAL_NOW = timezone(TIMEZONE).localize(datetime.now())
 
 basicConfig(level="DEBUG")
 LOG = getLogger(__name__)
+
+def parse_command_args():
+    """
+    Create argument parser and parse the command line arguments
+    """
+    parser = ArgumentParser(
+        description='Compose and send a tweet about a play from the Parisian Stage'
+        )
+    parser.add_argument('-n', '--no_tweet', action='store_true')
+    parser.add_argument('-d', '--date', type=str)
+    parser.add_argument('-w', '--wicks', type=str)
+    parser.add_argument('-b', '--book', action='store_true')
+    parser.add_argument('-t', '--tweeted', action='store_true')
+    parser.add_argument('-f', '--force', action='store_true')
+    return parser.parse_args()
+
 
 def load_config():
     """
@@ -97,6 +112,29 @@ def time_to_tweet(play_count):
     return False
 
 
+def upload_image(config, title_image):
+    """
+    Given a config and an image object, connect to the Twitter upload service,
+    upload the image and return the image ID if successful
+    """
+    image_id = None
+
+    twupload = Twitter(
+    domain='upload.twitter.com',
+    auth=OAuth(
+        config['token'],
+        config['token_secret'],
+        config['consumer_key'],
+        config['consumer_secret']
+        )
+    )
+
+    image_response = twupload.media.upload(media=title_image)
+    if image_response:
+        image_id = image_response['media_id_string']
+    return image_id
+
+
 def send_tweet(config, message, title_image):
     """
     Send the tweet
@@ -110,22 +148,9 @@ def send_tweet(config, message, title_image):
 
     image_id = None
     if title_image:
-        twupload = Twitter(
-            domain='upload.twitter.com',
-            auth=OAuth(
-                config['token'],
-                config['token_secret'],
-                config['consumer_key'],
-                config['consumer_secret']
-                )
-            )
-        image_res = twupload.media.upload(media=title_image)
-        if image_res:
-            image_id = image_res['media_id_string']
-            status = twapi.statuses.update(status=message, media_ids=image_id)
-            return status
+        image_id = upload_image(config, title_image)
 
-    status = twapi.statuses.update(status=message)
+    status = twapi.statuses.update(status=message, media_ids=image_id)
     return status
 
 
@@ -153,12 +178,13 @@ def expand_abbreviation(cursor, phrase):
     return phrase
 
 
-def check_by_date(config, today_date, tweeted):
+def check_by_date(config, args_date, tweeted):
     """
     Given a config dict, a date and whether to search already tweeted plays,
     check for plays with the given date.  If there are non, check from the first
     of the month.
     """
+    today_date = get_date(args_date)
     play_list = query_by_date(config, today_date, tweeted)
 
     if not play_list:
@@ -170,54 +196,49 @@ def check_by_date(config, today_date, tweeted):
     return play_list
 
 
-if __name__ == '__main__':
-    PARSER = argparse.ArgumentParser(
-        description='Compose and send a tweet about a play from the Parisian Stage'
-        )
-    PARSER.add_argument('-n', '--no_tweet', action='store_true')
-    PARSER.add_argument('-d', '--date', type=str)
-    PARSER.add_argument('-w', '--wicks', type=str)
-    PARSER.add_argument('-b', '--book', action='store_true')
-    PARSER.add_argument('-t', '--tweeted', action='store_true')
-    PARSER.add_argument('-f', '--force', action='store_true')
-    ARGS = PARSER.parse_args()
-    TODAY_DATE = get_date(ARGS.date)
+def main():
+    """
+    """
+    args = parse_command_args()
+    config = load_config()
 
-    CONFIG = load_config()
-
-    if ARGS.wicks:
-        PLAY_LIST = query_by_wicks_id(CONFIG['db'], ARGS.wicks, ARGS.tweeted)
+    if args.wicks:
+        play_list = query_by_wicks_id(config['db'], args.wicks, args.tweeted)
     else:
-        PLAY_LIST = check_by_date(CONFIG['db'], TODAY_DATE, ARGS.tweeted)
+        play_list = check_by_date(config['db'], args.date, args.tweeted)
 
-    if not PLAY_LIST:
+    if not play_list:
         exit(0)
 
-    with db_cursor(CONFIG['db']) as CURSOR:
-        if not ARGS.no_tweet and not ARGS.force and not time_to_tweet(len(PLAY_LIST)):
-            exit(0)
+    if not args.no_tweet and not args.force and not time_to_tweet(
+        len(play_list)
+        ):
+        exit(0)
 
-        EXPANDED_GENRE = expand_abbreviation(CURSOR, PLAY_LIST[0]['genre'])
-        PLAY = Play.from_dict(PLAY_LIST[0])
-        PLAY.set_today(get_date())
-        PLAY.set_expanded_genre(EXPANDED_GENRE)
-        LOG.info(PLAY)
+    with db_cursor(config['db']) as cursor:
+        play = Play.from_dict(play_list[0])
+        play.set_today(get_date())
+        expanded_genre = expand_abbreviation(cursor, play_list[0]['genre'])
+        play.set_expanded_genre(expanded_genre)
+        LOG.info(play)
 
-        BOOK_RESULT = BookResult()
-        BOOK_LINK = ''
-        if ARGS.book:
-            BOOK_RESULT = check_books_api(
-                CONFIG['path']['google_service_account'], PLAY
+        book_result = BookResult()
+        if args.book:
+            book_result = check_books_api(
+                config['path']['google_service_account'], play
                 )
 
-        if ARGS.no_tweet:
+        if args.no_tweet:
             exit(0)
 
-        STATUS = send_tweet(
-            CONFIG['twitter'],
-            str(PLAY) + ' ' + BOOK_RESULT.get_better_book_url(),
-            BOOK_RESULT.get_image_file()
+        status = send_tweet(
+            config['twitter'],
+            str(play) + ' ' + book_result.get_better_book_url(),
+            book_result.get_image_file()
             )
-        if 'id' in STATUS:
-            LOG.info("Sent tweet ID# %s", STATUS['id'])
-            tweet_db(CURSOR, PLAY_LIST[0]['id'])
+        if 'id' in status:
+            LOG.info("Sent tweet ID# %s", status['id'])
+            tweet_db(cursor, play_list[0]['id'])
+
+if __name__ == '__main__':
+    main()

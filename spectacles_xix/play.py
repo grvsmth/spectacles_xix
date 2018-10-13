@@ -103,7 +103,7 @@ class Play:
         """
         Given a dict input,
         """
-        play = cls(row['play_id'], row['wicks'])
+        play = cls(row['id'], row['wicks'])
 
         play.title = row.get('title')
         play.author = row.get('author')
