@@ -5,15 +5,15 @@ data
 from unittest import TestCase, main
 from unittest.mock import Mock, patch
 
-from spectacles_xix.check_books import(
+from check_books import(
     SCOPES, check_books_api, get_api, search_api, BookResult, HttpError
     )
 
 
 class TestApi(TestCase):
 
-    @patch('spectacles_xix.check_books.build')
-    @patch('spectacles_xix.check_books.Credentials')
+    @patch('check_books.build')
+    @patch('check_books.Credentials')
     def test_get_api(self, mock_cred_class, mock_build):
         test_file_name = '/path/to/test_file.ini'
         mock_credentials = Mock()
@@ -118,9 +118,9 @@ class TestApi(TestCase):
             )
         mock_volumes.list.return_value.execute.assert_called_once_with()
 
-    @patch('spectacles_xix.check_books.BookResult')
-    @patch('spectacles_xix.check_books.search_api')
-    @patch('spectacles_xix.check_books.get_api')
+    @patch('check_books.BookResult')
+    @patch('check_books.search_api')
+    @patch('check_books.get_api')
     def test_check_books_api(self, mock_get, mock_search, mock_result):
         test_config_path = '/path/to/config/file.json'
 
@@ -197,8 +197,8 @@ class TestBookResult(TestCase):
         test_url = self.result.get_better_book_url()
         self.assertEqual(test_url, target_url)
 
-    @patch('spectacles_xix.check_books.get')
-    @patch('spectacles_xix.check_books.BookResult.get_better_image_url')
+    @patch('check_books.get')
+    @patch('check_books.BookResult.get_better_image_url')
     def test_get_image_file(self, mock_image, mock_get):
         mock_image.return_value = self.target_image_url
         mock_content = 'test content'
@@ -212,8 +212,8 @@ class TestBookResult(TestCase):
         mock_image.assert_called_once_with()
         mock_get.assert_called_once_with(self.target_image_url)
 
-    @patch('spectacles_xix.check_books.get')
-    @patch('spectacles_xix.check_books.BookResult.get_better_image_url')
+    @patch('check_books.get')
+    @patch('check_books.BookResult.get_better_image_url')
     def test_get_image_file_empty(self, mock_image, mock_get):
         mock_image.return_value = ''
 

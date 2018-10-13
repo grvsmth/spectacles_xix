@@ -27,7 +27,7 @@ from db_ops import(
 
 CONFIG_PATH = 'spectacles_xix/config'
 TIMEZONE = 'Europe/Paris'
-DATE_FORMAT = "%A le %d %B %Y"
+INPUT_DATE_FORMAT = "%d-%m-%Y"
 setlocale(LC_TIME, "fr_FR")
 
 basicConfig(level="DEBUG")
@@ -68,7 +68,7 @@ def get_date_object(date_string):
     """
     Convert a date string into a date object, or
     """
-    return datetime.strptime(date_string, "%d-%m-%Y").date()
+    return datetime.strptime(date_string, INPUT_DATE_FORMAT).date()
 
 
 def get_200_years_ago(local_now):
