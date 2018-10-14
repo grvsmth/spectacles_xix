@@ -78,15 +78,11 @@ def get_200_years_ago(local_now):
     return local_now.date() + relativedelta.relativedelta(years=-200)
 
 
-def time_to_tweet(local_now, play_count):
+def get_hours_per_tweet(this_hour, play_count):
     """
-    Determine whether this is a good time to tweet
+    Given the current hour and the number of plays left to tweet, determine the
+    hours remaning
     """
-    if not play_count:
-        LOG.info("No plays: %s", play_count)
-        return False
-
-    this_hour = local_now.hour
     hours_remaining = 23 - this_hour
     hours_per_tweet = hours_remaining / play_count
     LOG.info(
@@ -95,17 +91,27 @@ def time_to_tweet(local_now, play_count):
         play_count,
         hours_per_tweet
         )
+    return hours_per_tweet
 
+
+def is_time_to_tweet(args, this_hour, hours_per_tweet):
+    """
+    Determine whether this is a good time to tweet
+    """
+    good_time = False
     # if we have 1 or less hours per tweet, then just tweet
     if hours_per_tweet <= 1:
-        return True
+        good_time = True
 
     # if it's after noon (6AM New York time) and we have a play every two hours
     if this_hour > 12 and hours_per_tweet <= 2:
-        return True
+        good_time = True
 
     # if it's after 3PM (9AM New York time) and we have a play every three hours
     if this_hour > 15 and hours_per_tweet <= 3:
+        good_time = True
+
+    if good_time or args.no_tweet or args.force:
         return True
 
     return False
@@ -235,9 +241,9 @@ def main():
     if not play_list:
         exit(0)
 
-    if not args.no_tweet and not args.force and not time_to_tweet(
-        local_now, len(play_list),
-        ):
+    hours_per_tweet = get_hours_per_tweet(local_now.hour, len(play_list))
+
+    if not is_time_to_tweet(args, local_now.hour, hours_per_tweet):
         exit(0)
 
     with db_cursor(config['db']) as cursor:
