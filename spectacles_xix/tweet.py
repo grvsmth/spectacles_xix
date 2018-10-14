@@ -117,26 +117,30 @@ def is_time_to_tweet(args, this_hour, hours_per_tweet):
     return False
 
 
-def upload_image(config, title_image):
+def get_oauth(config):
+    """
+    Retrieve an OAuth object based on the token, key and secrets in the config
+    """
+    return OAuth(
+        config['token'],
+        config['token_secret'],
+        config['consumer_key'],
+        config['consumer_secret']
+        )
+
+
+def upload_image(oauth, title_image):
     """
     Given a config and an image object, connect to the Twitter upload service,
     upload the image and return the image ID if successful
     """
     image_id = None
 
-    twupload = Twitter(
-    domain='upload.twitter.com',
-    auth=OAuth(
-        config['token'],
-        config['token_secret'],
-        config['consumer_key'],
-        config['consumer_secret']
-        )
-    )
+    twupload = Twitter(domain='upload.twitter.com', auth=oauth)
 
     image_response = twupload.media.upload(media=title_image)
     if image_response:
-        image_id = image_response['media_id_string']
+        image_id = image_response.get('media_id_string')
     return image_id
 
 
@@ -144,16 +148,12 @@ def send_tweet(config, message, title_image):
     """
     Send the tweet
     """
-    twapi = Twitter(auth=OAuth(
-        config['token'],
-        config['token_secret'],
-        config['consumer_key'],
-        config['consumer_secret']
-        ))
+    oauth = get_oauth(config)
+    twapi = Twitter(auth=oauth)
 
     image_id = None
     if title_image:
-        image_id = upload_image(config, title_image)
+        image_id = upload_image(oauth, title_image)
 
     status = twapi.statuses.update(status=message, media_ids=image_id)
     return status

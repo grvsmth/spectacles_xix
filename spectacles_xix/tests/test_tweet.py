@@ -7,11 +7,14 @@ from tweet import(
     get_date_object,
     get_hours_per_tweet,
     is_time_to_tweet,
+    get_oauth,
+    upload_image,
+    send_tweet,
     check_by_date
     )
 
 
-class TestTweet(TestCase):
+class TestTime(TestCase):
 
     @patch('tweet.datetime')
     def test_get_date_object(self, mock_datetime):
@@ -145,6 +148,104 @@ class TestTweet(TestCase):
             test_config, test_now, test_date, test_tweeted
             )
         self.assertEqual(test_list, mock_list)
+
+
+class TestTweet(TestCase):
+
+    @patch('tweet.OAuth')
+    def test_get_oauth(self, mock_oauth):
+        test_token = 'test token'
+        test_token_secret = 'test token secret'
+        test_consumer_key = 'test consumer key'
+        test_consumer_secret = 'test consumer secret'
+        test_config = {
+            'token': test_token,
+            'token_secret': test_token_secret,
+            'consumer_key': test_consumer_key,
+            'consumer_secret': test_consumer_secret
+            }
+
+        mock_auth = Mock()
+        mock_oauth.return_value = mock_auth
+
+        test_auth = get_oauth(test_config)
+        self.assertEqual(test_auth, mock_auth)
+
+        mock_oauth.assert_called_once_with(
+            test_token,
+            test_token_secret,
+            test_consumer_key,
+            test_consumer_secret
+            )
+
+    @patch('tweet.Twitter')
+    def test_upload_image(self, mock_twitter):
+        mock_oauth = Mock()
+        mock_image = Mock()
+        mock_image_id = 'a4i5u8;'
+
+        mock_twupload = Mock()
+        mock_twupload.media.upload.return_value = {
+            'media_id_string': mock_image_id
+            }
+
+        mock_twitter.return_value = mock_twupload
+
+        test_image_id = upload_image(mock_oauth, mock_image)
+        self.assertEqual(test_image_id, mock_image_id)
+
+        mock_twitter.assert_called_once_with(
+            domain='upload.twitter.com', auth=mock_oauth
+            )
+        mock_twupload.media.upload.assert_called_once_with(
+            media=mock_image
+            )
+
+    @patch('tweet.Twitter')
+    def test_upload_image_none(self, mock_twitter):
+        mock_oauth = Mock()
+        mock_image = Mock()
+        target_image_id = None
+
+        mock_twupload = Mock()
+        mock_twupload.media.upload.return_value = None
+
+        mock_twitter.return_value = mock_twupload
+
+        test_image_id = upload_image(mock_oauth, mock_image)
+        self.assertEqual(test_image_id, target_image_id)
+
+        mock_twitter.assert_called_once_with(
+            domain='upload.twitter.com', auth=mock_oauth
+            )
+        mock_twupload.media.upload.assert_called_once_with(
+            media=mock_image
+            )
+
+    @patch('tweet.Twitter')
+    def test_upload_image_no_id(self, mock_twitter):
+        mock_oauth = Mock()
+        mock_image = Mock()
+        target_image_id = None
+
+        mock_twupload = Mock()
+        mock_twupload.media.upload.return_value = {
+            'media_id_foo': 'bleah'
+            }
+
+        mock_twitter.return_value = mock_twupload
+
+        test_image_id = upload_image(mock_oauth, mock_image)
+        self.assertEqual(test_image_id, target_image_id)
+
+        mock_twitter.assert_called_once_with(
+            domain='upload.twitter.com', auth=mock_oauth
+            )
+        mock_twupload.media.upload.assert_called_once_with(
+            media=mock_image
+            )
+
+
 
 
 if __name__ == '__main__':
