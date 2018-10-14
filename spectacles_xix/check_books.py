@@ -64,7 +64,7 @@ def check_books_api(do_check, config_path, play):
     books_api = get_api(config_path)
     book_response = search_api(
         books_api,
-        "intitle:{} inauthor:{}".format(play.title, play.author)
+        'intitle:"{}" inauthor:"{}"'.format(play.title, play.author)
         )
     return BookResult.from_api_response(book_response)
 

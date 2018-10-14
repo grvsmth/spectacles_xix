@@ -15,7 +15,7 @@ from pytz import timezone
 from twitter import Twitter, OAuth
 
 from play import Play
-from check_books import check_books_api, BookResult
+from check_books import check_books_api
 from db_ops import(
     db_cursor, query_by_wicks_id, query_by_date, abbreviation_db, tweet_db
     )

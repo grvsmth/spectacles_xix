@@ -594,7 +594,6 @@ class TestDb(TestCase):
         self.assertListEqual(mock_list, test_list)
 
 
-
     @patch('tweet.send_tweet')
     @patch('tweet.check_books_api')
     @patch('tweet.get_play')

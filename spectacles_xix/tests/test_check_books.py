@@ -122,6 +122,38 @@ class TestApi(TestCase):
     @patch('check_books.search_api')
     @patch('check_books.get_api')
     def test_check_books_api(self, mock_get, mock_search, mock_result):
+        test_do_check = True
+        test_config_path = '/path/to/config/file.json'
+
+        test_title = 'test title'
+        test_author = 'test author'
+        mock_play = Mock(title=test_title, author=test_author)
+
+        mock_api = Mock()
+        mock_get.return_value = mock_api
+        target_search = 'intitle:"test title" inauthor:"test author"'
+
+        test_response = {'volumeInfo': 'foo'}
+        mock_search.return_value = test_response
+
+        mock_result_object = Mock()
+        mock_result.from_api_response.return_value = mock_result_object
+
+        with self.assertLogs(level="INFO"):
+            test_result = check_books_api(
+                test_do_check, test_config_path, mock_play
+                )
+        self.assertEqual(test_result, mock_result_object)
+
+        mock_get.assert_called_once_with(test_config_path)
+        mock_search.assert_called_once_with(mock_api, target_search)
+        mock_result.from_api_response.assert_called_once_with(test_response)
+
+    @patch('check_books.BookResult')
+    @patch('check_books.search_api')
+    @patch('check_books.get_api')
+    def test_check_books_api_no(self, mock_get, mock_search, mock_result):
+        test_do_check = False
         test_config_path = '/path/to/config/file.json'
 
         test_title = 'test title'
@@ -131,14 +163,16 @@ class TestApi(TestCase):
         mock_api = Mock()
         mock_get.return_value = mock_api
 
-        test_response = {'volumeInfo': 'foo'}
-        mock_search.return_value = test_response
-
         mock_result_object = Mock()
-        mock_result.from_api_response.return_value = mock_result_object
+        mock_result.return_value = mock_result_object
 
-        test_result = check_books_api(test_config_path, mock_play)
+        test_result = check_books_api(
+            test_do_check, test_config_path, mock_play
+            )
         self.assertEqual(test_result, mock_result_object)
+        mock_result.assert_called_once_with()
+        mock_get.assert_not_called()
+        mock_search.assert_not_called()
 
 
 class TestBookResult(TestCase):
