@@ -12,7 +12,10 @@ from tweet import(
     send_tweet,
     get_replacements,
     expand_abbreviation,
-    check_by_date
+    check_by_date,
+    get_play,
+    get_play_list,
+    main as tweet_main
     )
 
 
@@ -68,68 +71,110 @@ class TestTime(TestCase):
             test_hours = get_hours_per_tweet(test_hour, test_play_count)
         self.assertEqual(test_hours, target_hours)
 
-    def test_is_time_to_tweet(self):
+    @patch('tweet.get_hours_per_tweet')
+    def test_is_time_to_tweet(self, mock_get):
         mock_args = Mock(no_tweet=False, force=False)
         test_hour = 9000
+        test_play_count = 1
+
         test_hours_per_tweet = 1
+        mock_get.return_value = test_hours_per_tweet
 
         target_time = True
-        test_time = is_time_to_tweet(mock_args, test_hour, test_hours_per_tweet)
-        self.assertEqual(test_time, target_time)
+        test_time = is_time_to_tweet(mock_args, test_hour, test_play_count)
 
-    def test_is_time_to_tweet_pm(self):
+        self.assertEqual(test_time, target_time)
+        mock_get.assert_called_once_with(test_hour, test_play_count)
+
+    @patch('tweet.get_hours_per_tweet')
+    def test_is_time_to_tweet_pm(self, mock_get):
         mock_args = Mock(no_tweet=False, force=False)
         test_hour = 13
+        test_play_count = 7
+
         test_hours_per_tweet = 2
+        mock_get.return_value = test_hours_per_tweet
 
         target_time = True
-        test_time = is_time_to_tweet(mock_args, test_hour, test_hours_per_tweet)
-        self.assertEqual(test_time, target_time)
+        test_time = is_time_to_tweet(mock_args, test_hour, test_play_count)
 
-    def test_is_time_to_tweet_pm_false(self):
+        self.assertEqual(test_time, target_time)
+        mock_get.assert_called_once_with(test_hour, test_play_count)
+
+    @patch('tweet.get_hours_per_tweet')
+    def test_is_time_to_tweet_pm_false(self, mock_get):
         mock_args = Mock(no_tweet=False, force=False)
         test_hour = 13
+        test_play_count = 5
+
         test_hours_per_tweet = 3
+        mock_get.return_value = test_hours_per_tweet
 
         target_time = False
-        test_time = is_time_to_tweet(mock_args, test_hour, test_hours_per_tweet)
-        self.assertEqual(test_time, target_time)
+        test_time = is_time_to_tweet(mock_args, test_hour, test_play_count)
 
-    def test_is_time_to_tweet_evening(self):
+        self.assertEqual(test_time, target_time)
+        mock_get.assert_called_once_with(test_hour, test_play_count)
+
+    @patch('tweet.get_hours_per_tweet')
+    def test_is_time_to_tweet_evening(self, mock_get):
         mock_args = Mock(no_tweet=False, force=False)
         test_hour = 19
+        test_play_count = 9
+
         test_hours_per_tweet = 2
+        mock_get.return_value = test_hours_per_tweet
 
         target_time = True
-        test_time = is_time_to_tweet(mock_args, test_hour, test_hours_per_tweet)
-        self.assertEqual(test_time, target_time)
+        test_time = is_time_to_tweet(mock_args, test_hour, test_play_count)
 
-    def test_is_time_to_tweet_evening_false(self):
+        self.assertEqual(test_time, target_time)
+        mock_get.assert_called_once_with(test_hour, test_play_count)
+
+    @patch('tweet.get_hours_per_tweet')
+    def test_is_time_to_tweet_evening_false(self, mock_get):
         mock_args = Mock(no_tweet=False, force=False)
         test_hour = 19
+        test_play_count = 4
+
         test_hours_per_tweet = 5
+        mock_get.return_value = test_hours_per_tweet
 
         target_time = False
-        test_time = is_time_to_tweet(mock_args, test_hour, test_hours_per_tweet)
-        self.assertEqual(test_time, target_time)
+        test_time = is_time_to_tweet(mock_args, test_hour, test_play_count)
 
-    def test_is_time_to_tweet_false_no_tweet(self):
+        self.assertEqual(test_time, target_time)
+        mock_get.assert_called_once_with(test_hour, test_play_count)
+
+    @patch('tweet.get_hours_per_tweet')
+    def test_is_time_to_tweet_false_no_tweet(self, mock_get):
         mock_args = Mock(no_tweet=True, force=False)
         test_hour = 13
+        test_play_count = 6
+
         test_hours_per_tweet = 3
+        mock_get.return_value = test_hours_per_tweet
 
         target_time = True
-        test_time = is_time_to_tweet(mock_args, test_hour, test_hours_per_tweet)
-        self.assertEqual(test_time, target_time)
+        test_time = is_time_to_tweet(mock_args, test_hour, test_play_count)
 
-    def test_is_time_to_tweet_false_force(self):
+        self.assertEqual(test_time, target_time)
+        mock_get.assert_called_once_with(test_hour, test_play_count)
+
+    @patch('tweet.get_hours_per_tweet')
+    def test_is_time_to_tweet_false_force(self, mock_get):
         mock_args = Mock(no_tweet=False, force=True)
         test_hour = 13
+        test_play_count = 4
+
         test_hours_per_tweet = 3
+        mock_get.return_value = test_hours_per_tweet
 
         target_time = True
-        test_time = is_time_to_tweet(mock_args, test_hour, test_hours_per_tweet)
+        test_time = is_time_to_tweet(mock_args, test_hour, test_play_count)
+
         self.assertEqual(test_time, target_time)
+        mock_get.assert_called_once_with(test_hour, test_play_count)
 
 
 class TestTweet(TestCase):
@@ -231,12 +276,16 @@ class TestTweet(TestCase):
             media=mock_image
             )
 
+    @patch('tweet.tweet_db')
     @patch('tweet.upload_image')
     @patch('tweet.Twitter')
     @patch('tweet.get_oauth')
-    def test_send_tweet(self, mock_get_oauth, mock_twitter, mock_upload):
+    def test_send_tweet(self, mock_get, mock_twitter, mock_upload, mock_db):
+        mock_cursor = Mock()
+        test_play_id = 888
+
         mock_oauth = Mock()
-        mock_get_oauth.return_value = mock_oauth
+        mock_get.return_value = mock_oauth
 
         mock_twapi = Mock()
         mock_status = {'id' : 'xyz'}
@@ -246,45 +295,99 @@ class TestTweet(TestCase):
         mock_image = Mock()
         mock_upload.return_value = self.mock_image_id
 
-        test_status = send_tweet(
-            self.test_config, self.test_message, mock_image
-            )
+        with self.assertLogs(level="INFO"):
+            test_status = send_tweet(
+                mock_cursor,
+                self.test_config,
+                test_play_id,
+                self.test_message,
+                mock_image
+                )
         self.assertDictEqual(test_status, mock_status)
 
-        mock_get_oauth.assert_called_once_with(self.test_config)
+        mock_get.assert_called_once_with(self.test_config)
         mock_twitter.assert_called_once_with(auth=mock_oauth)
 
         mock_upload.asert_called_once_with(mock_oauth, mock_image)
         mock_twapi.statuses.update.assert_called_once_with(
             status=self.test_message, media_ids=self.mock_image_id
             )
+        mock_db.assert_called_once_with(mock_cursor, test_play_id)
 
+    @patch('tweet.tweet_db')
     @patch('tweet.upload_image')
     @patch('tweet.Twitter')
     @patch('tweet.get_oauth')
-    def test_send_tweet_no_image(self, mock_get_oauth, mock_twitter, mock_upload):
+    def test_send_tweet_no_id(self, mock_get, mock_twitter, mock_upload, mock_db):
+        mock_cursor = Mock()
+        test_play_id = 888
+
         mock_oauth = Mock()
-        mock_get_oauth.return_value = mock_oauth
+        mock_get.return_value = mock_oauth
+
+        mock_twapi = Mock()
+        mock_status = {'zid' : 'xyz'}
+        mock_twapi.statuses.update.return_value = mock_status
+        mock_twitter.return_value = mock_twapi
+
+        mock_image = Mock()
+        mock_upload.return_value = self.mock_image_id
+
+        with self.assertLogs(level="ERROR"):
+            test_status = send_tweet(
+                mock_cursor,
+                self.test_config,
+                test_play_id,
+                self.test_message,
+                mock_image
+                )
+        self.assertDictEqual(test_status, mock_status)
+
+        mock_get.assert_called_once_with(self.test_config)
+        mock_twitter.assert_called_once_with(auth=mock_oauth)
+
+        mock_upload.asert_called_once_with(mock_oauth, mock_image)
+        mock_twapi.statuses.update.assert_called_once_with(
+            status=self.test_message, media_ids=self.mock_image_id
+            )
+        mock_db.assert_not_called()
+
+    @patch('tweet.tweet_db')
+    @patch('tweet.upload_image')
+    @patch('tweet.Twitter')
+    @patch('tweet.get_oauth')
+    def test_send_tweet_no_image(self, m_get, m_twitter, m_upload, m_db):
+        mock_cursor = Mock()
+        test_play_id = 888
+
+        mock_oauth = Mock()
+        m_get.return_value = mock_oauth
 
         mock_twapi = Mock()
         mock_status = {'id' : 'xyz'}
         mock_twapi.statuses.update.return_value = mock_status
-        mock_twitter.return_value = mock_twapi
+        m_twitter.return_value = mock_twapi
 
         mock_image = None
 
-        test_status = send_tweet(
-            self.test_config, self.test_message, mock_image
-            )
+        with self.assertLogs(level="INFO"):
+            test_status = send_tweet(
+                mock_cursor,
+                self.test_config,
+                test_play_id,
+                self.test_message,
+                mock_image
+                )
         self.assertDictEqual(test_status, mock_status)
 
-        mock_get_oauth.assert_called_once_with(self.test_config)
-        mock_twitter.assert_called_once_with(auth=mock_oauth)
+        m_get.assert_called_once_with(self.test_config)
+        m_twitter.assert_called_once_with(auth=mock_oauth)
 
-        mock_upload.asert_not_called()
+        m_upload.asert_not_called()
         mock_twapi.statuses.update.assert_called_once_with(
             status=self.test_message, media_ids=None
             )
+        m_db.assert_called_once_with(mock_cursor, test_play_id)
 
 
 class TestDb(TestCase):
@@ -377,6 +480,129 @@ class TestDb(TestCase):
             test_config, mock_date_object, test_tweeted
             )
         mock_get_200.assert_not_called()
+
+    @patch('tweet.query_by_date')
+    @patch('tweet.get_200_years_ago')
+    @patch('tweet.get_date_object')
+    def test_check_by_date_200(self, mock_get_date, mock_get_200, mock_query):
+        test_date = None
+        test_now = Mock()
+
+        test_config = {'test': 'config'}
+        test_tweeted = True
+
+        mock_date_object = Mock()
+        mock_get_200.return_value = mock_date_object
+
+        mock_list = ['play 1', 'play 2']
+        mock_query.return_value = mock_list
+
+        test_list = check_by_date(
+            test_config, test_now, test_date, test_tweeted
+            )
+        self.assertEqual(test_list, mock_list)
+
+        mock_get_200.assert_called_once_with(test_now)
+        mock_query.assert_called_once_with(
+            test_config, mock_date_object, test_tweeted
+            )
+        mock_get_date.assert_not_called()
+
+    @patch('tweet.query_by_date')
+    @patch('tweet.get_200_years_ago')
+    @patch('tweet.get_date_object')
+    def test_check_by_date_first(self, mock_get_date, mock_get_200, mock_query):
+        test_date = '12-10-1818'
+        test_now = Mock()
+
+        test_config = {'test': 'config'}
+        test_tweeted = True
+
+        mock_date_object = Mock()
+        mock_first_object = Mock()
+        mock_date_object.replace.return_value = mock_first_object
+        mock_get_date.return_value = mock_date_object
+
+        get_date_calls = [
+            call(test_config, mock_date_object, test_tweeted),
+            call(test_config, mock_first_object, test_tweeted, limit=1)
+            ]
+
+        mock_list = ['play 1', 'play 2']
+        mock_query.side_effect = [[], mock_list]
+
+        with self.assertLogs(level="INFO"):
+            test_list = check_by_date(
+                test_config, test_now, test_date, test_tweeted
+                )
+        self.assertEqual(test_list, mock_list)
+
+        mock_get_date.assert_called_once_with(test_date)
+        mock_query.assert_has_calls(get_date_calls)
+        mock_get_200.assert_not_called()
+
+    @patch('tweet.Play')
+    @patch('tweet.expand_abbreviation')
+    @patch('tweet.get_200_years_ago')
+    def test_get_play(self, mock_get_200, mock_expand, mock_play_class):
+        mock_cursor = Mock()
+        mock_now = Mock()
+
+        test_genre = 'test genre'
+        test_dict = {'test': 'dict', 'genre': test_genre}
+
+        mock_old_date = Mock()
+        mock_get_200.return_value = mock_old_date
+
+        test_expanded_genre = 'test expanded genre'
+        mock_expand.return_value = test_expanded_genre
+
+        mock_play = Mock()
+        mock_play_class.from_dict.return_value = mock_play
+
+        with self.assertLogs(level="INFO"):
+            test_play = get_play(mock_cursor, mock_now, test_dict)
+
+        self.assertEqual(test_play, mock_play)
+
+        mock_get_200.assert_called_once_with(mock_now)
+        mock_expand.assert_called_once_with(mock_cursor, test_genre)
+
+        print(mock_play_class.mock_calls)
+
+        mock_play.from_dict.assert_called_once_with(test_dict)
+        mock_play.set_today.assert_called_once_with(mock_old_date)
+        mock_play.set_expanded_genre.assert_called_once_with(
+            test_expanded_genre
+            )
+
+    @patch('tweet.check_by_date')
+    @patch('tweet.query_by_wicks_id')
+    def test_get_play_list(self, mock_query, mock_check):
+        test_config = {'test': 'config'}
+        test_wicks = True
+
+        mock_now = Mock()
+        test_date = 'test date'
+        test_tweeted = False
+
+        mock_list = ['play1', 'play2']
+        mock_query.return_value = mock_list
+
+        test_list = get_play_list(
+            test_config, test_wicks, mock_now, test_date, test_tweeted)
+        self.assertListEqual(mock_list, test_list)
+
+
+
+    @patch('tweet.send_tweet')
+    @patch('tweet.check_books_api')
+    @patch('tweet.get_play')
+    @patch('tweet.is_time_to_tweet')
+    @patch('tweet.get_play_list')
+    def test_main(self, mock_list, mock_time, mock_play, mock_check, mock_send):
+        self.assertTrue(False)
+
 
 
 if __name__ == '__main__':

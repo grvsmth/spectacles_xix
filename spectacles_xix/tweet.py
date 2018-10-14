@@ -94,10 +94,11 @@ def get_hours_per_tweet(this_hour, play_count):
     return hours_per_tweet
 
 
-def is_time_to_tweet(args, this_hour, hours_per_tweet):
+def is_time_to_tweet(args, this_hour, play_count):
     """
     Determine whether this is a good time to tweet
     """
+    hours_per_tweet = get_hours_per_tweet(this_hour, play_count)
     good_time = False
     # if we have 1 or less hours per tweet, then just tweet
     if hours_per_tweet <= 1:
@@ -142,21 +143,6 @@ def upload_image(oauth, title_image):
     if image_response:
         image_id = image_response.get('media_id_string')
     return image_id
-
-
-def send_tweet(config, message, title_image):
-    """
-    Send the tweet
-    """
-    oauth = get_oauth(config)
-    twapi = Twitter(auth=oauth)
-
-    image_id = None
-    if title_image:
-        image_id = upload_image(oauth, title_image)
-
-    status = twapi.statuses.update(status=message, media_ids=image_id)
-    return status
 
 
 def get_replacements(cursor, abbrev_match):
@@ -231,6 +217,41 @@ def get_play(cursor, local_now, play_dict):
     return play
 
 
+def get_play_list(config, wicks, local_now, args_date, tweeted):
+    """
+    Depending on the arguments, check by Wicks ID or date
+    """
+    if wicks:
+        play_list = query_by_wicks_id(config, wicks, tweeted)
+    else:
+        play_list = check_by_date(config, local_now, args_date, tweeted)
+
+    if not play_list:
+        exit(0)
+
+    return play_list
+
+
+def send_tweet(cursor, config, play_id, message, title_image):
+    """
+    Send the tweet
+    """
+    oauth = get_oauth(config)
+    twapi = Twitter(auth=oauth)
+
+    image_id = None
+    if title_image:
+        image_id = upload_image(oauth, title_image)
+
+    status = twapi.statuses.update(status=message, media_ids=image_id)
+    if 'id' in status:
+        LOG.info("Sent tweet ID# %s", status['id'])
+        tweet_db(cursor, play_id)
+    else:
+        LOG.error(status)
+    return status
+
+
 def main():
     """
     Parse arguments, load config, get current date, get play list, get play,
@@ -240,44 +261,30 @@ def main():
     config = load_config()
 
     local_now = timezone(TIMEZONE).localize(datetime.now())
+    play_list = get_play_list(
+        config['db'], args.wicks, local_now, args.date, args.tweeted
+        )
 
-    if args.wicks:
-        play_list = query_by_wicks_id(config['db'], args.wicks, args.tweeted)
-    else:
-        play_list = check_by_date(
-            config['db'], local_now, args.date, args.tweeted
-            )
-
-    if not play_list:
-        exit(0)
-
-    hours_per_tweet = get_hours_per_tweet(local_now.hour, len(play_list))
-
-    if not is_time_to_tweet(args, local_now.hour, hours_per_tweet):
+    if not is_time_to_tweet(args, local_now.hour, len(play_list)):
         exit(0)
 
     with db_cursor(config['db']) as cursor:
         play = get_play(cursor, local_now, play_list[0])
 
-        book_result = BookResult()
-        if args.book:
-            book_result = check_books_api(
-                config['path']['google_service_account'], play
-                )
+        book_result = check_books_api(
+            args.book, config['path']['google_service_account'], play
+            )
 
         if args.no_tweet:
             exit(0)
 
-        status = send_tweet(
+        send_tweet(
+            cursor,
             config['twitter'],
+            play_list[0]['id'],
             str(play) + ' ' + book_result.get_better_book_url(),
             book_result.get_image_file()
             )
-        if 'id' in status:
-            LOG.info("Sent tweet ID# %s", status['id'])
-            tweet_db(cursor, play_list[0]['id'])
-        else:
-            LOG.error(status)
 
 if __name__ == '__main__':
     main()
