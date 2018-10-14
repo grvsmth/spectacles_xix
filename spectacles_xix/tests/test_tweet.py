@@ -309,18 +309,21 @@ class TestTweet(TestCase):
 
 class TestDb(TestCase):
 
-    @patch('tweet.abbreviation_db')
-    def test_get_replacements(self, mock_abbreviation_db):
-        mock_cursor = Mock()
-        target_abbrev_match = [
+    def setUp(self):
+        self.abbrev_match_list = [
             ('op', 'opéra'),
             ('com', 'comique')
             ]
 
+
+    @patch('tweet.abbreviation_db')
+    def test_get_replacements(self, mock_abbreviation_db):
+        mock_cursor = Mock()
+
         match_list = []
         call_list = []
         expansion_list = []
-        for match_tuple in target_abbrev_match:
+        for match_tuple in self.abbrev_match_list:
             mock_match = Mock()
             mock_match.group.return_value = match_tuple[0]
             match_list.append(mock_match)
@@ -331,7 +334,7 @@ class TestDb(TestCase):
         mock_abbreviation_db.side_effect = expansion_list
 
         test_abbrev_match = get_replacements(mock_cursor, match_list)
-        self.assertEqual(test_abbrev_match, set(target_abbrev_match))
+        self.assertEqual(test_abbrev_match, set(self.abbrev_match_list))
 
         mock_abbreviation_db.assert_has_calls(call_list)
 
@@ -341,8 +344,18 @@ class TestDb(TestCase):
     def test_expand_abbreviation(self, mock_finditer, mock_get):
         mock_cursor = Mock()
         mock_phrase = 'op.-com.'
+        target_expansion = 'opéra-comique'
 
+        mock_abbrev_match = ['op', 'com']
+        mock_finditer.return_value = mock_abbrev_match
 
+        mock_replacements = set(self.abbrev_match_list)
+        mock_get.return_value = mock_replacements
+
+        test_expansion = expand_abbreviation(mock_cursor, mock_phrase)
+        self.assertEqual(test_expansion, target_expansion)
+
+        mock_finditer.assert_called_once_with(r'(\w+)\.', mock_phrase)
 
 if __name__ == '__main__':
     main()
