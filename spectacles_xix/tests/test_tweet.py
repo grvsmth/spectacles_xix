@@ -356,6 +356,8 @@ class TestDb(TestCase):
         self.assertEqual(test_expansion, target_expansion)
 
         mock_finditer.assert_called_once_with(r'(\w+)\.', mock_phrase)
+        mock_get.assert_called_once_with(mock_cursor, mock_abbrev_match)
+
 
 if __name__ == '__main__':
     main()
