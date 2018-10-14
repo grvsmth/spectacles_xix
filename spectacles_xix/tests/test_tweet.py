@@ -1,5 +1,5 @@
 from unittest import TestCase, main
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 from tweet import(
     INPUT_DATE_FORMAT,
@@ -10,6 +10,8 @@ from tweet import(
     get_oauth,
     upload_image,
     send_tweet,
+    get_replacements,
+    expand_abbreviation,
     check_by_date
     )
 
@@ -152,47 +154,51 @@ class TestTime(TestCase):
 
 class TestTweet(TestCase):
 
+    def setUp(self):
+        self.test_token = 'test token'
+        self.test_token_secret = 'test token secret'
+        self.test_consumer_key = 'test consumer key'
+        self.test_consumer_secret = 'test consumer secret'
+        self.test_config = {
+            'token': self.test_token,
+            'token_secret': self.test_token_secret,
+            'consumer_key': self.test_consumer_key,
+            'consumer_secret': self.test_consumer_secret
+            }
+
+        self.mock_image_id = 'a4i5u8;'
+        self.test_message = 'test message'
+
     @patch('tweet.OAuth')
     def test_get_oauth(self, mock_oauth):
-        test_token = 'test token'
-        test_token_secret = 'test token secret'
-        test_consumer_key = 'test consumer key'
-        test_consumer_secret = 'test consumer secret'
-        test_config = {
-            'token': test_token,
-            'token_secret': test_token_secret,
-            'consumer_key': test_consumer_key,
-            'consumer_secret': test_consumer_secret
-            }
 
         mock_auth = Mock()
         mock_oauth.return_value = mock_auth
 
-        test_auth = get_oauth(test_config)
+        test_auth = get_oauth(self.test_config)
         self.assertEqual(test_auth, mock_auth)
 
         mock_oauth.assert_called_once_with(
-            test_token,
-            test_token_secret,
-            test_consumer_key,
-            test_consumer_secret
+            self.test_token,
+            self.test_token_secret,
+            self.test_consumer_key,
+            self.test_consumer_secret
             )
 
     @patch('tweet.Twitter')
     def test_upload_image(self, mock_twitter):
         mock_oauth = Mock()
         mock_image = Mock()
-        mock_image_id = 'a4i5u8;'
 
         mock_twupload = Mock()
         mock_twupload.media.upload.return_value = {
-            'media_id_string': mock_image_id
+            'media_id_string': self.mock_image_id
             }
 
         mock_twitter.return_value = mock_twupload
 
         test_image_id = upload_image(mock_oauth, mock_image)
-        self.assertEqual(test_image_id, mock_image_id)
+        self.assertEqual(test_image_id, self.mock_image_id)
 
         mock_twitter.assert_called_once_with(
             domain='upload.twitter.com', auth=mock_oauth
@@ -245,6 +251,96 @@ class TestTweet(TestCase):
             media=mock_image
             )
 
+    @patch('tweet.upload_image')
+    @patch('tweet.Twitter')
+    @patch('tweet.get_oauth')
+    def test_send_tweet(self, mock_get_oauth, mock_twitter, mock_upload):
+        mock_oauth = Mock()
+        mock_get_oauth.return_value = mock_oauth
+
+        mock_twapi = Mock()
+        mock_status = {'id' : 'xyz'}
+        mock_twapi.statuses.update.return_value = mock_status
+        mock_twitter.return_value = mock_twapi
+
+        mock_image = Mock()
+        mock_upload.return_value = self.mock_image_id
+
+        test_status = send_tweet(
+            self.test_config, self.test_message, mock_image
+            )
+        self.assertDictEqual(test_status, mock_status)
+
+        mock_get_oauth.assert_called_once_with(self.test_config)
+        mock_twitter.assert_called_once_with(auth=mock_oauth)
+
+        mock_upload.asert_called_once_with(mock_oauth, mock_image)
+        mock_twapi.statuses.update.assert_called_once_with(
+            status=self.test_message, media_ids=self.mock_image_id
+            )
+
+    @patch('tweet.upload_image')
+    @patch('tweet.Twitter')
+    @patch('tweet.get_oauth')
+    def test_send_tweet_no_image(self, mock_get_oauth, mock_twitter, mock_upload):
+        mock_oauth = Mock()
+        mock_get_oauth.return_value = mock_oauth
+
+        mock_twapi = Mock()
+        mock_status = {'id' : 'xyz'}
+        mock_twapi.statuses.update.return_value = mock_status
+        mock_twitter.return_value = mock_twapi
+
+        mock_image = None
+
+        test_status = send_tweet(
+            self.test_config, self.test_message, mock_image
+            )
+        self.assertDictEqual(test_status, mock_status)
+
+        mock_get_oauth.assert_called_once_with(self.test_config)
+        mock_twitter.assert_called_once_with(auth=mock_oauth)
+
+        mock_upload.asert_not_called()
+        mock_twapi.statuses.update.assert_called_once_with(
+            status=self.test_message, media_ids=None
+            )
+
+
+class TestDb(TestCase):
+
+    @patch('tweet.abbreviation_db')
+    def test_get_replacements(self, mock_abbreviation_db):
+        mock_cursor = Mock()
+        target_abbrev_match = [
+            ('op', 'opéra'),
+            ('com', 'comique')
+            ]
+
+        match_list = []
+        call_list = []
+        expansion_list = []
+        for match_tuple in target_abbrev_match:
+            mock_match = Mock()
+            mock_match.group.return_value = match_tuple[0]
+            match_list.append(mock_match)
+
+            call_list.append(call(mock_cursor, match_tuple[0]))
+            expansion_list.append(match_tuple[1])
+
+        mock_abbreviation_db.side_effect = expansion_list
+
+        test_abbrev_match = get_replacements(mock_cursor, match_list)
+        self.assertEqual(test_abbrev_match, set(target_abbrev_match))
+
+        mock_abbreviation_db.assert_has_calls(call_list)
+
+
+    @patch('tweet.get_replacements')
+    @patch('tweet.finditer')
+    def test_expand_abbreviation(self, mock_finditer, mock_get):
+        mock_cursor = Mock()
+        mock_phrase = 'op.-com.'
 
 
 

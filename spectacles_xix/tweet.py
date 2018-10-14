@@ -159,6 +159,23 @@ def send_tweet(config, message, title_image):
     return status
 
 
+def get_replacements(cursor, abbrev_match):
+    """
+    Given a db cursor and a set of possible abbreviations, return any matches
+    found in the database
+    """
+    replacements = set()
+
+    for match_object in abbrev_match:
+        abbreviation = match_object.group(1)
+
+        expansion = abbreviation_db(cursor, abbreviation)
+        if expansion:
+            replacements.add((abbreviation, expansion))
+
+    return replacements
+
+
 def expand_abbreviation(cursor, phrase):
     """
     Look up abbreviation expansion in the database
@@ -168,14 +185,7 @@ def expand_abbreviation(cursor, phrase):
     if not abbrev_match:
         return phrase
 
-    replacements = set()
-
-    for match_object in abbrev_match:
-        abbreviation = match_object.group(1)
-
-        expansion = abbreviation_db(cursor, abbreviation)
-        if expansion:
-            replacements.add((abbreviation, expansion))
+    replacements = get_replacements(cursor, abbrev_match)
 
     for (abbreviation, expansion) in replacements:
         phrase = phrase.replace(abbreviation + '.', expansion)
