@@ -315,7 +315,6 @@ class TestDb(TestCase):
             ('com', 'comique')
             ]
 
-
     @patch('tweet.abbreviation_db')
     def test_get_replacements(self, mock_abbreviation_db):
         mock_cursor = Mock()
@@ -338,7 +337,6 @@ class TestDb(TestCase):
 
         mock_abbreviation_db.assert_has_calls(call_list)
 
-
     @patch('tweet.get_replacements')
     @patch('tweet.finditer')
     def test_expand_abbreviation(self, mock_finditer, mock_get):
@@ -357,6 +355,21 @@ class TestDb(TestCase):
 
         mock_finditer.assert_called_once_with(r'(\w+)\.', mock_phrase)
         mock_get.assert_called_once_with(mock_cursor, mock_abbrev_match)
+
+    @patch('tweet.get_replacements')
+    @patch('tweet.finditer')
+    def test_expand_abbreviation_no_match(self, mock_finditer, mock_get):
+        mock_cursor = Mock()
+        mock_phrase = 'op.-com.'
+
+        mock_abbrev_match = []
+        mock_finditer.return_value = mock_abbrev_match
+
+        test_expansion = expand_abbreviation(mock_cursor, mock_phrase)
+        self.assertEqual(test_expansion, mock_phrase)
+
+        mock_finditer.assert_called_once_with(r'(\w+)\.', mock_phrase)
+        mock_get.assert_not_called()
 
 
 if __name__ == '__main__':
