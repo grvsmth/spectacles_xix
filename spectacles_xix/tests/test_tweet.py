@@ -131,26 +131,6 @@ class TestTime(TestCase):
         test_time = is_time_to_tweet(mock_args, test_hour, test_hours_per_tweet)
         self.assertEqual(test_time, target_time)
 
-    @patch('tweet.query_by_date')
-    @patch('tweet.get_date_object')
-    def test_check_by_date(self, mock_get, mock_query):
-        test_date = '12-10-1818'
-        test_now = Mock()
-
-        test_config = {'test': 'config'}
-        test_tweeted = True
-
-        mock_date_object = Mock()
-        mock_get.return_value = mock_date_object
-
-        mock_list = ['play 1', 'play 2']
-        mock_query.return_value = mock_list
-
-        test_list = check_by_date(
-            test_config, test_now, test_date, test_tweeted
-            )
-        self.assertEqual(test_list, mock_list)
-
 
 class TestTweet(TestCase):
 
@@ -370,6 +350,33 @@ class TestDb(TestCase):
 
         mock_finditer.assert_called_once_with(r'(\w+)\.', mock_phrase)
         mock_get.assert_not_called()
+
+    @patch('tweet.query_by_date')
+    @patch('tweet.get_200_years_ago')
+    @patch('tweet.get_date_object')
+    def test_check_by_date(self, mock_get_date, mock_get_200, mock_query):
+        test_date = '12-10-1818'
+        test_now = Mock()
+
+        test_config = {'test': 'config'}
+        test_tweeted = True
+
+        mock_date_object = Mock()
+        mock_get_date.return_value = mock_date_object
+
+        mock_list = ['play 1', 'play 2']
+        mock_query.return_value = mock_list
+
+        test_list = check_by_date(
+            test_config, test_now, test_date, test_tweeted
+            )
+        self.assertEqual(test_list, mock_list)
+
+        mock_get_date.assert_called_once_with(test_date)
+        mock_query.assert_called_once_with(
+            test_config, mock_date_object, test_tweeted
+            )
+        mock_get_200.assert_not_called()
 
 
 if __name__ == '__main__':
