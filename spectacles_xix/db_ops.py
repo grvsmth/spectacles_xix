@@ -32,7 +32,7 @@ def db_cursor(config, cursorclass=Cursor):
             config['db'],
             charset='utf8',
             cursorclass=cursorclass
-        ) as cursor:
+            ) as cursor:
 
         cursor.execute('SET NAMES utf8;')
         cursor.execute('SET CHARACTER SET utf8;')
@@ -76,8 +76,8 @@ def query_by_date(config, greg_date, tweeted=False, limit=None):
 
 def query_play(config, query_string, lookup_term):
     """
-    Given a database configuration, a query string and a lookup term, search for
-    plays and return a list
+    Given a database configuration, a query string and a lookup term, search
+    for plays and return a list
     """
     with db_cursor(config, cursorclass=DictCursor) as cursor:
         play_list = play_db(cursor, query_string, lookup_term)

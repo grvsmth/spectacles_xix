@@ -16,10 +16,11 @@ QUERY_RE = re.compile(r'&dq=.+?(?=&)')
 basicConfig(level='DEBUG')
 LOG = getLogger()
 
+
 def get_api(config_fn):
     """
-    Given a Google API service account file, build a Google Books API client and
-    return it
+    Given a Google API service account file, build a Google Books API client
+    and return it
     """
     credentials = Credentials.from_service_account_file(
         config_fn,
@@ -32,8 +33,8 @@ def get_api(config_fn):
 
 def search_api(api, term):
     """
-    Given a Google Books API client and a term, search the API for that term and
-    return the first result
+    Given a Google Books API client and a term, search the API for that term
+    and return the first result
     """
     try:
         volumes = api.volumes()
@@ -98,8 +99,8 @@ class BookResult:
 
     def get_better_image_url(self):
         """
-        Transform and return book image url, increasing size and removing curled
-        edge
+        Transform and return book image url, increasing size and removing
+        curled edge
         """
         if not self.image_url:
             return self.image_url

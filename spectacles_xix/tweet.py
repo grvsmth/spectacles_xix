@@ -42,7 +42,8 @@ def is_time_to_tweet(args, this_hour, play_count):
     if this_hour > 12 and hours_per_tweet <= 2:
         good_time = True
 
-    # if it's after 3PM (9AM New York time) and we have a play every three hours
+    # if it's after 3PM (9AM New York time) and we have a play every three
+    # hours
     if this_hour > 15 and hours_per_tweet <= 3:
         good_time = True
 

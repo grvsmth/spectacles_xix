@@ -26,7 +26,8 @@ def parse_command_args():
     Create argument parser and parse the command line arguments
     """
     parser = ArgumentParser(
-        description='Compose and send a tweet about a play from the Parisian Stage'
+        description='Compose and send a tweet about a play from the Parisian\
+ Stage'
         )
     parser.add_argument('-n', '--no_tweet', action='store_true')
     parser.add_argument('-d', '--date', type=str)

@@ -9,7 +9,9 @@ from re import finditer
 from dateutil import relativedelta
 
 from .check_books import check_books_api
-from .db_ops import abbreviation_db, db_cursor, query_by_date, query_by_wicks_id
+from .db_ops import (
+    abbreviation_db, db_cursor, query_by_date, query_by_wicks_id
+    )
 from .play import Play
 from .tweet import send_tweet
 
@@ -36,8 +38,8 @@ def get_200_years_ago(local_now):
 def check_by_date(config, local_now, args_date, tweeted):
     """
     Given a config dict, a date and whether to search already tweeted plays,
-    check for plays with the given date.  If there are non, check from the first
-    of the month.
+    check for plays with the given date.  If there are non, check from the
+    first of the month.
     """
     if args_date:
         today_date = get_date_object(args_date)
@@ -53,6 +55,7 @@ def check_by_date(config, local_now, args_date, tweeted):
         play_list = query_by_date(config, first_of_the_month, tweeted, limit=1)
 
     return play_list
+
 
 def get_replacements(cursor, abbrev_match):
     """
