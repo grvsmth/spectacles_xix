@@ -34,21 +34,21 @@ check for untweeted plays from the first of the month.
 `python -m spectacles_xix -b -c /path/to/config/file.ini`
 
 Command-line arguments:
-* -c/--config_file (required) Path to a configuration file (see Configuration below)
-* -b/--book Search for and tweet link and image from Google Books
-* -n/--no_tweet Dry run; do not tweet or mark the entry as tweeted (overrides all other flags)
-
-* -d/--date A specific date to look for in the database, in DD-MM-YYYY format, e.g. '15-10-1818'
-* -w/--wicks An ID number assigned by Wicks in *The Parisian Stage* (1953)
-
-* -t/--tweeted Retrieve and tweet plays even if they are marked as having already been tweeted
-* -f/--force Immediately find play (and optional book information) even if the time algorithm has determined that it is not yet time
+* **-c/--config_file** (required) Path to a configuration file (see Configuration below)
+* **-b/--book** Search for and tweet link and image from Google Books
+* **-n/--no_tweet** Dry run; do not tweet or mark the entry as tweeted (overrides all other flags)
+* **-d/--date** A specific date to look for in the database, in DD-MM-YYYY format, e.g. '15-10-1818'
+* **-w/--wicks** An ID number assigned by Wicks in *The Parisian Stage* (1953)
+* **-t/--tweeted** Retrieve and tweet plays even if they are marked as having already been tweeted
+* **-f/--force** Immediately find play (and optional book information) even if the time algorithm has determined that it is not yet time
 
 ## Configuration
 
-Here is a sample configuration file
+Here is a sample configuration file, to be placed at the path specified with the
+`--config_file` flag:
 
-```[db]
+```
+[db]
 db: database_name
 user: user_name
 password: password
