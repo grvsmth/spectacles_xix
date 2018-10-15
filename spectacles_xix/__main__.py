@@ -34,7 +34,7 @@ def parse_command_args():
     parser.add_argument('-b', '--book', action='store_true')
     parser.add_argument('-t', '--tweeted', action='store_true')
     parser.add_argument('-f', '--force', action='store_true')
-    parser.add_argument('-c', '--config_file', type=str)
+    parser.add_argument('-c', '--config_file', type=str, required=True)
     return parser.parse_args()
 
 
