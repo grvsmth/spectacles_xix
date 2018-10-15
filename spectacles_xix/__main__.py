@@ -2,11 +2,10 @@
 Main module for spectacles_xix
 """
 from argparse import ArgumentParser
+from configparser import ConfigParser
 from datetime import datetime
-import json
 from locale import LC_TIME, setlocale
 from logging import basicConfig, getLogger
-from pathlib import Path
 
 from pytz import timezone
 
@@ -20,10 +19,6 @@ setlocale(LC_TIME, "fr_FR")
 
 basicConfig(level="DEBUG")
 LOG = getLogger(__name__)
-
-# TODO config ini
-# TODO package
-# TODO unit tests
 
 
 def parse_command_args():
@@ -39,22 +34,17 @@ def parse_command_args():
     parser.add_argument('-b', '--book', action='store_true')
     parser.add_argument('-t', '--tweeted', action='store_true')
     parser.add_argument('-f', '--force', action='store_true')
+    parser.add_argument('-c', '--config_file', type=str)
     return parser.parse_args()
 
 
-def load_config():
+def parse_config(input_path):
     """
-    Load config
+    Load config from ini file using ConfigParser
     """
-    config = {'path': {}}
-    config_path = Path(Path.home(), CONFIG_PATH)
-    for cfile in config_path.glob('*.json'):
-        config_name = cfile.stem
-        config['path'][config_name] = str(cfile)
-        with cfile.open() as cfh:
-            config[config_name] = json.load(cfh)
-
-    return config
+    parser = ConfigParser()
+    parser.read(input_path)
+    return parser
 
 
 def main():
@@ -63,7 +53,7 @@ def main():
     check for book link, tweet
     """
     args = parse_command_args()
-    config = load_config()
+    config = parse_config(args.config_file)
 
     local_now = timezone(TIMEZONE).localize(datetime.now())
     play_list = get_play_list(
