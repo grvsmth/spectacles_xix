@@ -8,10 +8,10 @@ from re import finditer
 
 from dateutil import relativedelta
 
-from check_books import check_books_api
-from db_ops import abbreviation_db, db_cursor, query_by_date, query_by_wicks_id
-from play import Play
-from tweet import send_tweet
+from .check_books import check_books_api
+from .db_ops import abbreviation_db, db_cursor, query_by_date, query_by_wicks_id
+from .play import Play
+from .tweet import send_tweet
 
 basicConfig(level="DEBUG")
 LOG = getLogger(__name__)

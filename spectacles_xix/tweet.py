@@ -6,7 +6,7 @@ from logging import basicConfig, getLogger
 
 from twitter import Twitter, OAuth
 
-from db_ops import tweet_db
+from .db_ops import tweet_db
 
 basicConfig(level="DEBUG")
 LOG = getLogger(__name__)

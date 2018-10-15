@@ -1,7 +1,7 @@
 from unittest import TestCase, main
 from unittest.mock import Mock, patch
 
-from tweet import(
+from spectacles_xix.tweet import(
     get_hours_per_tweet,
     is_time_to_tweet,
     get_oauth,
@@ -30,7 +30,7 @@ class TestTime(TestCase):
             test_hours = get_hours_per_tweet(test_hour, test_play_count)
         self.assertEqual(test_hours, target_hours)
 
-    @patch('tweet.get_hours_per_tweet')
+    @patch('spectacles_xix.tweet.get_hours_per_tweet')
     def test_is_time_to_tweet(self, mock_get):
         mock_args = Mock(no_tweet=False, force=False)
         test_hour = 9000
@@ -45,7 +45,7 @@ class TestTime(TestCase):
         self.assertEqual(test_time, target_time)
         mock_get.assert_called_once_with(test_hour, test_play_count)
 
-    @patch('tweet.get_hours_per_tweet')
+    @patch('spectacles_xix.tweet.get_hours_per_tweet')
     def test_is_time_to_tweet_pm(self, mock_get):
         mock_args = Mock(no_tweet=False, force=False)
         test_hour = 13
@@ -60,7 +60,7 @@ class TestTime(TestCase):
         self.assertEqual(test_time, target_time)
         mock_get.assert_called_once_with(test_hour, test_play_count)
 
-    @patch('tweet.get_hours_per_tweet')
+    @patch('spectacles_xix.tweet.get_hours_per_tweet')
     def test_is_time_to_tweet_pm_false(self, mock_get):
         mock_args = Mock(no_tweet=False, force=False)
         test_hour = 13
@@ -75,7 +75,7 @@ class TestTime(TestCase):
         self.assertEqual(test_time, target_time)
         mock_get.assert_called_once_with(test_hour, test_play_count)
 
-    @patch('tweet.get_hours_per_tweet')
+    @patch('spectacles_xix.tweet.get_hours_per_tweet')
     def test_is_time_to_tweet_evening(self, mock_get):
         mock_args = Mock(no_tweet=False, force=False)
         test_hour = 19
@@ -90,7 +90,7 @@ class TestTime(TestCase):
         self.assertEqual(test_time, target_time)
         mock_get.assert_called_once_with(test_hour, test_play_count)
 
-    @patch('tweet.get_hours_per_tweet')
+    @patch('spectacles_xix.tweet.get_hours_per_tweet')
     def test_is_time_to_tweet_evening_false(self, mock_get):
         mock_args = Mock(no_tweet=False, force=False)
         test_hour = 19
@@ -105,7 +105,7 @@ class TestTime(TestCase):
         self.assertEqual(test_time, target_time)
         mock_get.assert_called_once_with(test_hour, test_play_count)
 
-    @patch('tweet.get_hours_per_tweet')
+    @patch('spectacles_xix.tweet.get_hours_per_tweet')
     def test_is_time_to_tweet_false_no_tweet(self, mock_get):
         mock_args = Mock(no_tweet=True, force=False)
         test_hour = 13
@@ -120,7 +120,7 @@ class TestTime(TestCase):
         self.assertEqual(test_time, target_time)
         mock_get.assert_called_once_with(test_hour, test_play_count)
 
-    @patch('tweet.get_hours_per_tweet')
+    @patch('spectacles_xix.tweet.get_hours_per_tweet')
     def test_is_time_to_tweet_false_force(self, mock_get):
         mock_args = Mock(no_tweet=False, force=True)
         test_hour = 13
@@ -153,7 +153,7 @@ class TestTweet(TestCase):
         self.mock_image_id = 'a4i5u8;'
         self.test_message = 'test message'
 
-    @patch('tweet.OAuth')
+    @patch('spectacles_xix.tweet.OAuth')
     def test_get_oauth(self, mock_oauth):
 
         mock_auth = Mock()
@@ -169,7 +169,7 @@ class TestTweet(TestCase):
             self.test_consumer_secret
             )
 
-    @patch('tweet.Twitter')
+    @patch('spectacles_xix.tweet.Twitter')
     def test_upload_image(self, mock_twitter):
         mock_oauth = Mock()
         mock_image = Mock()
@@ -191,7 +191,7 @@ class TestTweet(TestCase):
             media=mock_image
             )
 
-    @patch('tweet.Twitter')
+    @patch('spectacles_xix.tweet.Twitter')
     def test_upload_image_none(self, mock_twitter):
         mock_oauth = Mock()
         mock_image = Mock()
@@ -212,7 +212,7 @@ class TestTweet(TestCase):
             media=mock_image
             )
 
-    @patch('tweet.Twitter')
+    @patch('spectacles_xix.tweet.Twitter')
     def test_upload_image_no_id(self, mock_twitter):
         mock_oauth = Mock()
         mock_image = Mock()
@@ -235,10 +235,10 @@ class TestTweet(TestCase):
             media=mock_image
             )
 
-    @patch('tweet.tweet_db')
-    @patch('tweet.upload_image')
-    @patch('tweet.Twitter')
-    @patch('tweet.get_oauth')
+    @patch('spectacles_xix.tweet.tweet_db')
+    @patch('spectacles_xix.tweet.upload_image')
+    @patch('spectacles_xix.tweet.Twitter')
+    @patch('spectacles_xix.tweet.get_oauth')
     def test_send_tweet(self, mock_get, mock_twitter, mock_upload, mock_db):
         mock_cursor = Mock()
         test_play_id = 888
@@ -273,10 +273,10 @@ class TestTweet(TestCase):
             )
         mock_db.assert_called_once_with(mock_cursor, test_play_id)
 
-    @patch('tweet.tweet_db')
-    @patch('tweet.upload_image')
-    @patch('tweet.Twitter')
-    @patch('tweet.get_oauth')
+    @patch('spectacles_xix.tweet.tweet_db')
+    @patch('spectacles_xix.tweet.upload_image')
+    @patch('spectacles_xix.tweet.Twitter')
+    @patch('spectacles_xix.tweet.get_oauth')
     def test_send_tweet_no_id(self, mock_get, mock_twitter, mock_upload, mock_db):
         mock_cursor = Mock()
         test_play_id = 888
@@ -311,10 +311,10 @@ class TestTweet(TestCase):
             )
         mock_db.assert_not_called()
 
-    @patch('tweet.tweet_db')
-    @patch('tweet.upload_image')
-    @patch('tweet.Twitter')
-    @patch('tweet.get_oauth')
+    @patch('spectacles_xix.tweet.tweet_db')
+    @patch('spectacles_xix.tweet.upload_image')
+    @patch('spectacles_xix.tweet.Twitter')
+    @patch('spectacles_xix.tweet.get_oauth')
     def test_send_tweet_no_image(self, m_get, m_twitter, m_upload, m_db):
         mock_cursor = Mock()
         test_play_id = 888

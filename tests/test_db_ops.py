@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 from dateutil import relativedelta
 from MySQLdb import DatabaseError
 
-from db_ops import(
+from spectacles_xix.db_ops import(
     NOT_TWEETED_CONDITION,
     PLAY_SELECT,
     abbreviation_db,
@@ -157,9 +157,9 @@ class TestQuery(TestCase):
             )
         mock_cursor.fetchall.assert_not_called()
 
-    @patch('db_ops.DictCursor')
-    @patch('db_ops.play_db')
-    @patch('db_ops.db_cursor')
+    @patch('spectacles_xix.db_ops.DictCursor')
+    @patch('spectacles_xix.db_ops.play_db')
+    @patch('spectacles_xix.db_ops.db_cursor')
     def test_query_play(self, mock_db_cursor, mock_play, mock_dict_cursor):
         test_query_string = 'test query string'
         test_lookup_term = 'test term'
@@ -181,7 +181,7 @@ class TestQuery(TestCase):
             mock_cursor, test_query_string, test_lookup_term
             )
 
-    @patch('db_ops.query_play')
+    @patch('spectacles_xix.db_ops.query_play')
     def test_query_by_wicks_id(self, mock_query):
         test_wicks_id = 9999
         target_query_string = '{}\nWHERE wicks = %s\n{}'.format(
@@ -197,7 +197,7 @@ class TestQuery(TestCase):
             self.config, target_query_string, test_wicks_id
             )
 
-    @patch('db_ops.query_play')
+    @patch('spectacles_xix.db_ops.query_play')
     def test_query_by_wicks_id_tweeted(self, mock_query):
         test_wicks_id = 9999
         target_query_string = '{}\nWHERE wicks = %s\n'.format(
@@ -215,7 +215,7 @@ class TestQuery(TestCase):
             self.config, target_query_string, test_wicks_id
             )
 
-    @patch('db_ops.query_play')
+    @patch('spectacles_xix.db_ops.query_play')
     def test_query_by_date(self, mock_query):
         test_date = self.date
         target_query_string = '{}\nWHERE greg_date = %s\n{}\n'.format(
@@ -231,7 +231,7 @@ class TestQuery(TestCase):
             self.config, target_query_string, test_date.isoformat()
             )
 
-    @patch('db_ops.query_play')
+    @patch('spectacles_xix.db_ops.query_play')
     def test_query_by_date_limit(self, mock_query):
         test_date = self.date
         target_query_string = '{}\nWHERE greg_date = %s\n{}\nLIMIT 1'.format(
@@ -247,7 +247,7 @@ class TestQuery(TestCase):
             self.config, target_query_string, test_date.isoformat()
             )
 
-    @patch('db_ops.query_play')
+    @patch('spectacles_xix.db_ops.query_play')
     def test_query_by_date_tweeted(self, mock_query):
         target_query_string = '{}\nWHERE greg_date = %s\n\n'.format(
             PLAY_SELECT

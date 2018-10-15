@@ -9,8 +9,8 @@ from logging import basicConfig, getLogger
 
 from pytz import timezone
 
-from find_play import get_play_list, get_and_tweet
-from tweet import is_time_to_tweet
+from .find_play import get_play_list, get_and_tweet
+from .tweet import is_time_to_tweet
 
 CONFIG_PATH = 'spectacles_xix/config'
 TIMEZONE = 'Europe/Paris'

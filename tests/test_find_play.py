@@ -1,7 +1,7 @@
 from unittest import TestCase, main
 from unittest.mock import MagicMock, Mock, call, patch
 
-from find_play import(
+from spectacles_xix.find_play import(
     INPUT_DATE_FORMAT,
     get_date_object,
     get_200_years_ago,
@@ -16,7 +16,7 @@ from find_play import(
 
 class TestTime(TestCase):
 
-    @patch('find_play.datetime')
+    @patch('spectacles_xix.find_play.datetime')
     def test_get_date_object(self, mock_datetime):
         test_string = 'foo'
 
@@ -29,7 +29,7 @@ class TestTime(TestCase):
             test_string, INPUT_DATE_FORMAT
             )
 
-    @patch('find_play.relativedelta')
+    @patch('spectacles_xix.find_play.relativedelta')
     def test_get_200_years_ago(self, mock_relativedelta):
         mock_date = 2018
         mock_local_now = Mock()
@@ -57,7 +57,7 @@ class TestDb(TestCase):
             ('com', 'comique')
             ]
 
-    @patch('find_play.abbreviation_db')
+    @patch('spectacles_xix.find_play.abbreviation_db')
     def test_get_replacements(self, mock_abbreviation_db):
         mock_cursor = Mock()
 
@@ -79,8 +79,8 @@ class TestDb(TestCase):
 
         mock_abbreviation_db.assert_has_calls(call_list)
 
-    @patch('find_play.get_replacements')
-    @patch('find_play.finditer')
+    @patch('spectacles_xix.find_play.get_replacements')
+    @patch('spectacles_xix.find_play.finditer')
     def test_expand_abbreviation(self, mock_finditer, mock_get):
         mock_cursor = Mock()
         mock_phrase = 'op.-com.'
@@ -98,8 +98,8 @@ class TestDb(TestCase):
         mock_finditer.assert_called_once_with(r'(\w+)\.', mock_phrase)
         mock_get.assert_called_once_with(mock_cursor, mock_abbrev_match)
 
-    @patch('find_play.get_replacements')
-    @patch('find_play.finditer')
+    @patch('spectacles_xix.find_play.get_replacements')
+    @patch('spectacles_xix.find_play.finditer')
     def test_expand_abbreviation_no_match(self, mock_finditer, mock_get):
         mock_cursor = Mock()
         mock_phrase = 'op.-com.'
@@ -113,9 +113,9 @@ class TestDb(TestCase):
         mock_finditer.assert_called_once_with(r'(\w+)\.', mock_phrase)
         mock_get.assert_not_called()
 
-    @patch('find_play.query_by_date')
-    @patch('find_play.get_200_years_ago')
-    @patch('find_play.get_date_object')
+    @patch('spectacles_xix.find_play.query_by_date')
+    @patch('spectacles_xix.find_play.get_200_years_ago')
+    @patch('spectacles_xix.find_play.get_date_object')
     def test_check_by_date(self, mock_get_date, mock_get_200, mock_query):
         test_date = '12-10-1818'
         test_now = Mock()
@@ -140,9 +140,9 @@ class TestDb(TestCase):
             )
         mock_get_200.assert_not_called()
 
-    @patch('find_play.query_by_date')
-    @patch('find_play.get_200_years_ago')
-    @patch('find_play.get_date_object')
+    @patch('spectacles_xix.find_play.query_by_date')
+    @patch('spectacles_xix.find_play.get_200_years_ago')
+    @patch('spectacles_xix.find_play.get_date_object')
     def test_check_by_date_200(self, mock_get_date, mock_get_200, mock_query):
         test_date = None
         test_now = Mock()
@@ -167,9 +167,9 @@ class TestDb(TestCase):
             )
         mock_get_date.assert_not_called()
 
-    @patch('find_play.query_by_date')
-    @patch('find_play.get_200_years_ago')
-    @patch('find_play.get_date_object')
+    @patch('spectacles_xix.find_play.query_by_date')
+    @patch('spectacles_xix.find_play.get_200_years_ago')
+    @patch('spectacles_xix.find_play.get_date_object')
     def test_check_by_date_first(self, mock_get_date, mock_get_200, mock_query):
         test_date = '12-10-1818'
         test_now = Mock()
@@ -200,9 +200,9 @@ class TestDb(TestCase):
         mock_query.assert_has_calls(get_date_calls)
         mock_get_200.assert_not_called()
 
-    @patch('find_play.Play')
-    @patch('find_play.expand_abbreviation')
-    @patch('find_play.get_200_years_ago')
+    @patch('spectacles_xix.find_play.Play')
+    @patch('spectacles_xix.find_play.expand_abbreviation')
+    @patch('spectacles_xix.find_play.get_200_years_ago')
     def test_get_play(self, mock_get_200, mock_expand, mock_play_class):
         mock_cursor = Mock()
         mock_now = Mock()
@@ -233,8 +233,8 @@ class TestDb(TestCase):
             test_expanded_genre
             )
 
-    @patch('find_play.check_by_date')
-    @patch('find_play.query_by_wicks_id')
+    @patch('spectacles_xix.find_play.check_by_date')
+    @patch('spectacles_xix.find_play.query_by_wicks_id')
     def test_get_play_list(self, mock_query, mock_check):
         test_config = {'test': 'config'}
         test_wicks = True
@@ -256,8 +256,8 @@ class TestDb(TestCase):
             )
         mock_check.assert_not_called()
 
-    @patch('find_play.check_by_date')
-    @patch('find_play.query_by_wicks_id')
+    @patch('spectacles_xix.find_play.check_by_date')
+    @patch('spectacles_xix.find_play.query_by_wicks_id')
     def test_get_play_list_by_date(self, mock_query, mock_check):
         test_config = {'test': 'config'}
         test_wicks = False
@@ -278,8 +278,8 @@ class TestDb(TestCase):
             test_config, mock_now, test_date, test_tweeted
             )
 
-    @patch('find_play.check_by_date')
-    @patch('find_play.query_by_wicks_id')
+    @patch('spectacles_xix.find_play.check_by_date')
+    @patch('spectacles_xix.find_play.query_by_wicks_id')
     def test_get_play_list_empty(self, mock_query, mock_check):
         test_config = {'test': 'config'}
         test_wicks = False
@@ -300,10 +300,10 @@ class TestDb(TestCase):
             test_config, mock_now, test_date, test_tweeted
             )
 
-    @patch('find_play.send_tweet')
-    @patch('find_play.check_books_api')
-    @patch('find_play.get_play')
-    @patch('find_play.db_cursor')
+    @patch('spectacles_xix.find_play.send_tweet')
+    @patch('spectacles_xix.find_play.check_books_api')
+    @patch('spectacles_xix.find_play.get_play')
+    @patch('spectacles_xix.find_play.db_cursor')
     def test_get_and_tweet(self, mock_db, mock_get, mock_check, mock_send):
         test_book = True
         test_no_tweet = False
@@ -358,10 +358,10 @@ class TestDb(TestCase):
             mock_image
             )
 
-    @patch('find_play.send_tweet')
-    @patch('find_play.check_books_api')
-    @patch('find_play.get_play')
-    @patch('find_play.db_cursor')
+    @patch('spectacles_xix.find_play.send_tweet')
+    @patch('spectacles_xix.find_play.check_books_api')
+    @patch('spectacles_xix.find_play.get_play')
+    @patch('spectacles_xix.find_play.db_cursor')
     def test_get_and_tweet_no(self, mock_db, mock_get, mock_check, mock_send):
         test_book = True
         test_no_tweet = True
