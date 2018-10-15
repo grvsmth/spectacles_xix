@@ -8,7 +8,7 @@ setuptools.setup(
     version="0.1.0",
     author="Angus B. Grieve-Smith",
     author_email="angus@grieve-smith.com",
-    description="Twitter bot to tweet play records from a database",
+    description="Twitter bot to tweet record of theatrical plays from a database",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/grvsmth/spectacles_xix",
