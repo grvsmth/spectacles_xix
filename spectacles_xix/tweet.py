@@ -9,6 +9,7 @@ from locale import LC_TIME, setlocale
 from logging import basicConfig, getLogger
 from pathlib import Path
 from re import finditer
+import sys
 
 from dateutil import relativedelta
 from pytz import timezone
@@ -227,7 +228,7 @@ def get_play_list(config, wicks, local_now, args_date, tweeted):
         play_list = check_by_date(config, local_now, args_date, tweeted)
 
     if not play_list:
-        exit(0)
+        sys.exit(0)
 
     return play_list
 
@@ -252,6 +253,29 @@ def send_tweet(cursor, config, play_id, message, title_image):
     return status
 
 
+def get_and_tweet(args_book, no_tweet, config, local_now, play_dict):
+    """
+    Get a cursor, get the play, check for books, send the tweet
+    """
+    with db_cursor(config['db']) as cursor:
+        play = get_play(cursor, local_now, play_dict)
+
+        book_result = check_books_api(
+            args_book, config['path']['google_service_account'], play
+            )
+
+        if no_tweet:
+            return
+
+        send_tweet(
+            cursor,
+            config['twitter'],
+            play_dict,
+            str(play) + ' ' + book_result.get_better_book_url(),
+            book_result.get_image_file()
+            )
+
+
 def main():
     """
     Parse arguments, load config, get current date, get play list, get play,
@@ -266,25 +290,10 @@ def main():
         )
 
     if not is_time_to_tweet(args, local_now.hour, len(play_list)):
-        exit(0)
+        sys.exit(0)
 
-    with db_cursor(config['db']) as cursor:
-        play = get_play(cursor, local_now, play_list[0])
+    get_and_tweet(args.book, args.no_tweet, config, local_now, play_list[0])
 
-        book_result = check_books_api(
-            args.book, config['path']['google_service_account'], play
-            )
-
-        if args.no_tweet:
-            exit(0)
-
-        send_tweet(
-            cursor,
-            config['twitter'],
-            play_list[0]['id'],
-            str(play) + ' ' + book_result.get_better_book_url(),
-            book_result.get_image_file()
-            )
 
 if __name__ == '__main__':
     main()

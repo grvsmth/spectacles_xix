@@ -1,5 +1,5 @@
 from unittest import TestCase, main
-from unittest.mock import Mock, call, patch
+from unittest.mock import MagicMock, Mock, call, patch
 
 from tweet import(
     INPUT_DATE_FORMAT,
@@ -15,6 +15,7 @@ from tweet import(
     check_by_date,
     get_play,
     get_play_list,
+    get_and_tweet,
     main as tweet_main
     )
 
@@ -568,9 +569,7 @@ class TestDb(TestCase):
         mock_get_200.assert_called_once_with(mock_now)
         mock_expand.assert_called_once_with(mock_cursor, test_genre)
 
-        print(mock_play_class.mock_calls)
-
-        mock_play.from_dict.assert_called_once_with(test_dict)
+        mock_play_class.from_dict.assert_called_once_with(test_dict)
         mock_play.set_today.assert_called_once_with(mock_old_date)
         mock_play.set_expanded_genre.assert_called_once_with(
             test_expanded_genre
@@ -590,16 +589,175 @@ class TestDb(TestCase):
         mock_query.return_value = mock_list
 
         test_list = get_play_list(
-            test_config, test_wicks, mock_now, test_date, test_tweeted)
+            test_config, test_wicks, mock_now, test_date, test_tweeted
+            )
         self.assertListEqual(mock_list, test_list)
 
+        mock_query.assert_called_once_with(
+            test_config, test_wicks, test_tweeted
+            )
+        mock_check.assert_not_called()
+
+    @patch('tweet.check_by_date')
+    @patch('tweet.query_by_wicks_id')
+    def test_get_play_list_by_date(self, mock_query, mock_check):
+        test_config = {'test': 'config'}
+        test_wicks = False
+
+        mock_now = Mock()
+        test_date = 'test date'
+        test_tweeted = False
+
+        mock_list = ['play1', 'play2']
+        mock_check.return_value = mock_list
+
+        test_list = get_play_list(
+            test_config, test_wicks, mock_now, test_date, test_tweeted
+            )
+        self.assertListEqual(mock_list, test_list)
+        mock_query.assert_not_called()
+        mock_check.assert_called_once_with(
+            test_config, mock_now, test_date, test_tweeted
+            )
+
+    @patch('tweet.check_by_date')
+    @patch('tweet.query_by_wicks_id')
+    def test_get_play_list_empty(self, mock_query, mock_check):
+        test_config = {'test': 'config'}
+        test_wicks = False
+
+        mock_now = Mock()
+        test_date = 'test date'
+        test_tweeted = False
+
+        mock_list = []
+        mock_check.return_value = mock_list
+
+        with self.assertRaises(SystemExit):
+            get_play_list(
+                test_config, test_wicks, mock_now, test_date, test_tweeted
+                )
+        mock_query.assert_not_called()
+        mock_check.assert_called_once_with(
+            test_config, mock_now, test_date, test_tweeted
+            )
 
     @patch('tweet.send_tweet')
     @patch('tweet.check_books_api')
     @patch('tweet.get_play')
+    @patch('tweet.db_cursor')
+    def test_get_and_tweet(self, mock_db, mock_get, mock_check, mock_send):
+        test_book = True
+        test_no_tweet = False
+
+        test_config_db = {'config db': True}
+        test_config_twitter = {'config_twitter': False}
+        test_path = '/path/to/service/account'
+        test_config = {
+            'db': test_config_db,
+            'path': {'google_service_account': test_path},
+            'twitter': test_config_twitter
+            }
+
+        mock_now = Mock()
+        test_play_dict = {'test play': True}
+
+        mock_play = MagicMock()
+        mock_description = 'Description'
+        mock_play.__str__.return_value = mock_description
+        mock_get.return_value = mock_play
+
+        mock_result = Mock()
+        mock_book_url = 'http://example.com/book/url'
+        mock_result.get_better_book_url.return_value = mock_book_url
+
+        mock_image = Mock()
+        mock_result.get_image_file.return_value = mock_image
+
+        mock_check.return_value = mock_result
+        target_tweet = mock_description + ' ' + mock_book_url
+
+        mock_cursor = Mock()
+        mock_db.return_value.__enter__.return_value = mock_cursor
+
+        get_and_tweet(
+            test_book, test_no_tweet, test_config, mock_now, test_play_dict
+            )
+
+        mock_db.assert_called_with(test_config_db)
+        mock_get.assert_called_once_with(
+            mock_cursor, mock_now, test_play_dict
+            )
+        mock_check.assert_called_once_with(test_book, test_path, mock_play)
+        mock_result.get_better_book_url.assert_called_once_with()
+        mock_result.get_image_file.assert_called_once_with()
+
+        mock_send.assert_called_once_with(
+            mock_cursor,
+            test_config_twitter,
+            test_play_dict,
+            target_tweet,
+            mock_image
+            )
+
+    @patch('tweet.send_tweet')
+    @patch('tweet.check_books_api')
+    @patch('tweet.get_play')
+    @patch('tweet.db_cursor')
+    def test_get_and_tweet_no(self, mock_db, mock_get, mock_check, mock_send):
+        test_book = True
+        test_no_tweet = True
+
+        test_config_db = {'config db': True}
+        test_config_twitter = {'config_twitter': False}
+        test_path = '/path/to/service/account'
+        test_config = {
+            'db': test_config_db,
+            'path': {'google_service_account': test_path},
+            'twitter': test_config_twitter
+            }
+
+        mock_now = Mock()
+        test_play_dict = {'test play': True}
+
+        mock_play = MagicMock()
+        mock_description = 'Description'
+        mock_play.__str__.return_value = mock_description
+        mock_get.return_value = mock_play
+
+        mock_result = Mock()
+        mock_book_url = 'http://example.com/book/url'
+        mock_result.get_better_book_url.return_value = mock_book_url
+
+        mock_image = Mock()
+        mock_result.get_image_file.return_value = mock_image
+
+        mock_check.return_value = mock_result
+
+        mock_cursor = Mock()
+        mock_db.return_value.__enter__.return_value = mock_cursor
+
+        get_and_tweet(
+            test_book, test_no_tweet, test_config, mock_now, test_play_dict
+            )
+
+        mock_db.assert_called_with(test_config_db)
+        mock_get.assert_called_once_with(
+            mock_cursor, mock_now, test_play_dict
+            )
+        mock_check.assert_called_once_with(test_book, test_path, mock_play)
+        mock_result.get_better_book_url.assert_not_called()
+        mock_result.get_image_file.assert_not_called()
+
+        mock_send.assert_not_called()
+
     @patch('tweet.is_time_to_tweet')
     @patch('tweet.get_play_list')
-    def test_main(self, mock_list, mock_time, mock_play, mock_check, mock_send):
+    @patch('tweet.timezone')
+    @patch('tweet.parse_command_args')
+    @patch('tweet.load_config')
+    def test_main(self, mock_load, mock_parse, mock_tz, mock_list, mock_time):
+
         self.assertTrue(False)
 
 
