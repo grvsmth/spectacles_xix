@@ -48,17 +48,18 @@ Command-line arguments:
 
 Here is a sample configuration file
 
-> [db]
-> db: database_name
-> user: user_name
-> password: password
-> host: host.name.example.com
->
-> [twitter]
-> token: twitter_token
-> token_secret: twitter_token_secret
-> consumer_key: twitter_consumer_key
-> consumer_secret: twitter_consumer_secret
->
-> [path]
-> google_service_account: /path/to/google_service_account.json
+```[db]
+db: database_name
+user: user_name
+password: password
+host: host.name.example.com
+
+[twitter]
+token: twitter_token
+token_secret: twitter_token_secret
+consumer_key: twitter_consumer_key
+consumer_secret: twitter_consumer_secret
+
+[path]
+google_service_account: /path/to/google_service_account.json
+```
