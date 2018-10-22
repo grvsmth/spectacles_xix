@@ -87,7 +87,7 @@ def send_tweet(cursor, config, play_id, message, title_image):
     oauth = get_oauth(config)
     twapi = Twitter(auth=oauth)
 
-    image_id = None
+    image_id = ''
     if title_image:
         image_id = upload_image(oauth, title_image)
 
