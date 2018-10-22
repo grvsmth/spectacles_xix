@@ -318,7 +318,7 @@ class TestDb(TestCase):
             }
 
         mock_now = Mock()
-        test_play_dict = {'test play': True}
+        test_play_dict = {'test play': True, 'id': 888}
 
         mock_play = MagicMock()
         mock_description = 'Description'
@@ -353,7 +353,7 @@ class TestDb(TestCase):
         mock_send.assert_called_once_with(
             mock_cursor,
             test_config_twitter,
-            test_play_dict,
+            test_play_dict['id'],
             target_tweet,
             mock_image
             )

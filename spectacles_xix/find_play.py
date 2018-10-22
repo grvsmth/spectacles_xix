@@ -136,7 +136,7 @@ def get_and_tweet(args_book, no_tweet, config, local_now, play_dict):
         send_tweet(
             cursor,
             config['twitter'],
-            play_dict,
+            play_dict['id'],
             str(play) + ' ' + book_result.get_better_book_url(),
             book_result.get_image_file()
             )

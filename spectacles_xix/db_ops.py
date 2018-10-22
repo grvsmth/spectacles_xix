@@ -143,9 +143,10 @@ def tweet_db(cursor, play_id):
     SET last_tweeted = %s
     WHERE id = %s
     """
-
+    timestamp = datetime.now().strftime("%Y-%m-%d")
     try:
-        cursor.execute(tweetq, [datetime.now().strftime("%Y-%m-%d"), play_id])
+        cursor.execute(tweetq, [timestamp, play_id])
+        LOG.debug("Marked play %s as tweeted on %s", play_id, timestamp)
     except DatabaseError as err:
         LOG.error(
             "Error updating tweeted timestamp for %s: %s",

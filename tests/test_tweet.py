@@ -344,7 +344,7 @@ class TestTweet(TestCase):
 
         m_upload.asert_not_called()
         mock_twapi.statuses.update.assert_called_once_with(
-            status=self.test_message, media_ids=None
+            status=self.test_message, media_ids=''
             )
         m_db.assert_called_once_with(mock_cursor, test_play_id)
 
