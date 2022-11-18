@@ -4,6 +4,7 @@ theaters from 200 years ago
 """
 from logging import basicConfig, getLogger
 
+from mastodon import Mastodon
 from twitter import Twitter, OAuth
 
 from .db_ops import tweet_db
@@ -80,6 +81,14 @@ def upload_image(oauth, title_image):
     return image_id
 
 
+def send_toot(config, message):
+    mastodon = Mastodon(client_id = config['client_id'],
+        client_secret = config['client_secret'],
+        access_token = config['access_token'],
+        api_base_url = config['base_uri'])
+
+    mastodon.toot(message)
+
 def send_tweet(cursor, config, play_id, message, title_image):
     """
     Send the tweet
@@ -97,4 +106,5 @@ def send_tweet(cursor, config, play_id, message, title_image):
         tweet_db(cursor, play_id)
     else:
         LOG.error(status)
+
     return status

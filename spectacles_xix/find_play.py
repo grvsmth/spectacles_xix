@@ -13,7 +13,7 @@ from .db_ops import (
     abbreviation_db, db_cursor, query_by_date, query_by_wicks_id
     )
 from .play import Play
-from .tweet import send_tweet
+from .tweet import send_tweet, send_toot
 
 basicConfig(level="DEBUG")
 LOG = getLogger(__name__)
@@ -119,7 +119,7 @@ def get_play(cursor, local_now, play_dict):
     return play
 
 
-def get_and_tweet(args_book, no_tweet, config, local_now, play_dict):
+def get_and_tweet(args_book, no_tweet, no_toot, config, local_now, play_dict):
     """
     Get a cursor, get the play, check for books, send the tweet
     """
@@ -129,6 +129,9 @@ def get_and_tweet(args_book, no_tweet, config, local_now, play_dict):
         book_result = check_books_api(
             args_book, config['path']['google_service_account'], play
             )
+
+        if not no_toot:
+            send_toot(config['mastodon'], str(play))
 
         if no_tweet:
             return
