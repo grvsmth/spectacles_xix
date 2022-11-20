@@ -107,7 +107,7 @@ def send_toot(config, message, title_image):
     if title_image:
         media_id = mastodon_image(mastodon, title_image)
         if media_id:
-            LOG.debug("media_id=" + media_id)
+            LOG.info("media_id=" + media_id)
             # Give the server a little time to process our pic
             sleep(MEDIA_WAIT_TIME)
 
