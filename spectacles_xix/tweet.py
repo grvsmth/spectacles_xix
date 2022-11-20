@@ -2,9 +2,10 @@
 Spectacles_XIX - Twitter bot to tweet announcements for performances in Paris
 theaters from 200 years ago
 """
+from json import dumps
 from logging import basicConfig, getLogger
 
-from mastodon import Mastodon
+from mastodon import Mastodon, MastodonAPIError
 from twitter import Twitter, OAuth
 
 from .db_ops import tweet_db
@@ -81,13 +82,41 @@ def upload_image(oauth, title_image):
     return image_id
 
 
-def send_toot(config, message):
+def mastodon_image(mastodon, title_image):
+    mime_type = "image/png"
+    media_res = mastodon.media_post(title_image, mime_type)
+    LOG.info("media_res=" + dumps(media_res))
+
+    if (media_res.get("type") != "image"):
+        LOG.info("Not an image!")
+        return None
+
+    return str(media_res.get("id", None))
+
+
+def send_toot(config, message, title_image):
+    media_id = None
+
+    attachment_error = 'Impossible de joindre les fichiers en cours de traitement. Réessayez dans un instant\xa0!'
+
     mastodon = Mastodon(client_id = config['client_id'],
         client_secret = config['client_secret'],
         access_token = config['access_token'],
         api_base_url = config['base_uri'])
 
-    mastodon.toot(message)
+    if title_image:
+        media_id = mastodon_image(mastodon, title_image)
+        if media_id:
+            LOG.info("media_id=" + media_id)
+
+    try:
+        mastodon.status_post(message, media_ids=[media_id])
+    except MastodonAPIError as err:
+        LOG.error("Unable to post status!  Trying without media... %s",
+            err)
+
+        if err.args[3] == attachment_error:
+            mastodon.status_post(message)
 
 def send_tweet(cursor, config, play_id, message, title_image):
     """

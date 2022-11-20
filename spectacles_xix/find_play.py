@@ -130,8 +130,11 @@ def get_and_tweet(args_book, no_tweet, no_toot, config, local_now, play_dict):
             args_book, config['path']['google_service_account'], play
             )
 
+        message = str(play) + ' ' + book_result.get_better_book_url()
+        book_image = book_result.get_image_file()
+
         if not no_toot:
-            send_toot(config['mastodon'], str(play))
+            send_toot(config['mastodon'], message, book_image)
 
         if no_tweet:
             return
@@ -140,6 +143,6 @@ def get_and_tweet(args_book, no_tweet, no_toot, config, local_now, play_dict):
             cursor,
             config['twitter'],
             play_dict['id'],
-            str(play) + ' ' + book_result.get_better_book_url(),
-            book_result.get_image_file()
+            message,
+            book_image
             )
