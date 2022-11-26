@@ -2,14 +2,13 @@
 Spectacles_XIX - Twitter bot to tweet announcements for performances in Paris
 theaters from 200 years ago
 """
-from json import dumps
 from logging import basicConfig, getLogger
 from time import sleep
 
 from mastodon import Mastodon, MastodonAPIError
 from twitter import Twitter, OAuth
 
-from .db_ops import tweet_db
+from .db_ops import toot_db, tweet_db
 
 basicConfig(level="DEBUG")
 LOG = getLogger(__name__)
@@ -96,7 +95,7 @@ def mastodon_image(mastodon, title_image):
     return str(media_res.get("id", None))
 
 
-def send_toot(config, message, title_image):
+def send_toot(cursor, config, play_id, message, title_image):
     media_id = None
 
     mastodon = Mastodon(client_id = config['client_id'],
@@ -112,13 +111,20 @@ def send_toot(config, message, title_image):
             sleep(MEDIA_WAIT_TIME)
 
     try:
-        mastodon.status_post(message, media_ids=[media_id])
+        status = mastodon.status_post(message, media_ids=[media_id])
     except MastodonAPIError as err:
         LOG.error("Unable to post status!  Trying without media... %s",
             err)
 
         if err.args[3] == ATTACHMENT_ERROR:
             mastodon.status_post(message)
+
+    if 'id' in status:
+        LOG.info("Sent toot ID# %s", status['id'])
+        toot_db(cursor, play_id)
+    else:
+        LOG.error(status)
+
 
 def send_tweet(cursor, config, play_id, message, title_image):
     """

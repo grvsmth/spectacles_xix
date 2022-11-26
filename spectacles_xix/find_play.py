@@ -125,6 +125,7 @@ def get_and_tweet(args_book, no_tweet, no_toot, config, local_now, play_dict):
     """
     with db_cursor(config['db']) as cursor:
         play = get_play(cursor, local_now, play_dict)
+        play_id = play_dict['id']
 
         book_result = check_books_api(
             args_book, config['path']['google_service_account'], play
@@ -134,7 +135,7 @@ def get_and_tweet(args_book, no_tweet, no_toot, config, local_now, play_dict):
         book_image = book_result.get_image_file()
 
         if not no_toot:
-            send_toot(config['mastodon'], message, book_image)
+            send_toot(cursor, config['mastodon'], play_id, message, book_image)
 
         if no_tweet:
             return
@@ -142,7 +143,7 @@ def get_and_tweet(args_book, no_tweet, no_toot, config, local_now, play_dict):
         send_tweet(
             cursor,
             config['twitter'],
-            play_dict['id'],
+            play_id,
             message,
             book_image
             )

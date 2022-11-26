@@ -153,3 +153,24 @@ def tweet_db(cursor, play_id):
             play_id,
             err
             )
+
+
+def toot_db(cursor, play_id):
+    """
+    Save data to db
+    """
+    tootq = """UPDATE spectacle_play
+    SET last_tooted = %s
+    WHERE id = %s
+    """
+    timestamp = datetime.now().strftime("%Y-%m-%d")
+    try:
+        cursor.execute(tootq, [timestamp, play_id])
+        LOG.debug("Marked play %s as tooted on %s", play_id, timestamp)
+    except DatabaseError as err:
+        LOG.error(
+            "Error updating tooted timestamp for %s: %s",
+            play_id,
+            err
+            )
+
