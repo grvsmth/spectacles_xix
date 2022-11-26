@@ -135,7 +135,7 @@ def get_and_tweet(args_book, no_tweet, no_toot, config, local_now, play_dict):
         book_image = book_result.get_image_file()
 
         if not no_toot:
-            char_limit = config['mastodon'].get('character_limit', 500)
+            char_limit = int(config['mastodon'].get('character_limit', 500))
             mastodon_message = play.get_description(char_limit) + ' ' + book_url
             send_toot(cursor,
                 config['mastodon'],
