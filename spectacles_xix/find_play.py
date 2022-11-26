@@ -131,19 +131,27 @@ def get_and_tweet(args_book, no_tweet, no_toot, config, local_now, play_dict):
             args_book, config['path']['google_service_account'], play
             )
 
-        message = str(play) + ' ' + book_result.get_better_book_url()
+        book_url = book_result.get_better_book_url()
         book_image = book_result.get_image_file()
 
         if not no_toot:
-            send_toot(cursor, config['mastodon'], play_id, message, book_image)
+            char_limit = config['mastodon'].get('character_limit', 500)
+            mastodon_message = play.get_description(char_limit) + ' ' + book_url
+            send_toot(cursor,
+                config['mastodon'],
+                play_id,
+                mastodon_message,
+                book_image)
 
         if no_tweet:
             return
+
+        twitter_message = str(play) + ' ' + book_url
 
         send_tweet(
             cursor,
             config['twitter'],
             play_id,
-            message,
+            twitter_message,
             book_image
             )
