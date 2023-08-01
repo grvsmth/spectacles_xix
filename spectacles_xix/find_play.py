@@ -35,7 +35,7 @@ def get_200_years_ago(local_now):
     return local_now.date() + relativedelta.relativedelta(years=-200)
 
 
-def check_by_date(config, local_now, args_date, tweeted):
+def check_by_date(config, local_now, args_date, tweeted, tooted):
     """
     Given a config dict, a date and whether to search already tweeted plays,
     check for plays with the given date.  If there are non, check from the
@@ -46,13 +46,14 @@ def check_by_date(config, local_now, args_date, tweeted):
     else:
         today_date = get_200_years_ago(local_now)
 
-    play_list = query_by_date(config, today_date, tweeted)
+    play_list = query_by_date(config, today_date, tweeted, tooted)
 
     if not play_list:
         # Look for one play from the first of the month
         first_of_the_month = today_date.replace(day=1)
         LOG.info("Checking for plays on %s", first_of_the_month)
-        play_list = query_by_date(config, first_of_the_month, tweeted, limit=1)
+        play_list = query_by_date(config, first_of_the_month, tweeted, tooted,
+            limit=1)
 
     return play_list
 
@@ -91,14 +92,14 @@ def expand_abbreviation(cursor, phrase):
     return phrase
 
 
-def get_play_list(config, wicks, local_now, args_date, tweeted):
+def get_play_list(config, wicks, local_now, args_date, tweeted, tooted):
     """
     Depending on the arguments, check by Wicks ID or date
     """
     if wicks:
-        play_list = query_by_wicks_id(config, wicks, tweeted)
+        play_list = query_by_wicks_id(config, wicks, tweeted, tooted)
     else:
-        play_list = check_by_date(config, local_now, args_date, tweeted)
+        play_list = check_by_date(config, local_now, args_date, tweeted, tooted)
 
     return play_list
 

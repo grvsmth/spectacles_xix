@@ -35,6 +35,7 @@ def parse_command_args():
     parser.add_argument('-w', '--wicks', type=str)
     parser.add_argument('-b', '--book', action='store_true')
     parser.add_argument('-t', '--tweeted', action='store_true')
+    parser.add_argument('-p', '--tooted', action='store_true')
     parser.add_argument('-f', '--force', action='store_true')
     parser.add_argument('-c', '--config_file', type=str, required=True)
     return parser.parse_args()
@@ -59,7 +60,8 @@ def main():
 
     local_now = timezone(TIMEZONE).localize(datetime.now())
     play_list = get_play_list(
-        config['db'], args.wicks, local_now, args.date, args.tweeted
+        config['db'], args.wicks, local_now, args.date, args.tweeted,
+        args.tooted
         )
 
     if not play_list:
