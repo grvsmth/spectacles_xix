@@ -17,6 +17,8 @@ SHORTER_TEMPLATE = '{title}, {author}{ce_jour_la} {date_string} {theater_code}.\
 GENRE_TEMPLATE = " {},"
 GENRE_ACT_FORMAT_TEMPLATE = " {} en {} {},"
 
+DEFAULT_CHARACTER_LIMIT = 280
+
 TIMEZONE = 'Europe/Paris'
 DATE_FORMAT = "%A le %d %B %Y"
 setlocale(LC_TIME, "fr_FR")
@@ -101,7 +103,7 @@ class Play:
     @classmethod
     def from_dict(cls, row):
         """
-        Given a dict input,
+        Given a dict input, add that info into the play attributes
         """
         play = cls(row['id'], row['wicks'])
 
@@ -191,13 +193,13 @@ class Play:
             }
         return play_dict
 
-    def __repr__(self):
+    def get_description(self, character_limit):
         """
         Generate description for tweet
         """
         play_dict = self.get_dict()
         description = BASIC_TEMPLATE.format(**play_dict)
-        if len(description) > 280:
+        if len(description) > character_limit:
             LOG.warning(
                 "Description for play %s is too long (%s characters)",
                 self.play_id,
@@ -206,7 +208,7 @@ class Play:
             play_dict['genre_phrase'] = self.get_genre_phrase()
             description = BASIC_TEMPLATE.format(**play_dict)
 
-            if len(description) > 280:
+            if len(description) > character_limit:
                 LOG.warning(
                     "Description for play %s is STILL too long (%s chars)",
                     self.play_id,
@@ -217,3 +219,9 @@ class Play:
                 description = SHORTER_TEMPLATE.format(**play_dict)
 
         return description
+
+    def __repr__(self):
+        """
+        Generate string with the default character limit
+        """
+        return self.get_description(DEFAULT_CHARACTER_LIMIT)

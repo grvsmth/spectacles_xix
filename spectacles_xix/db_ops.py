@@ -18,6 +18,7 @@ PLAY_SELECT = """SELECT id, wicks, title, author, genre, acts, format,
     """
 
 NOT_TWEETED_CONDITION = 'AND last_tweeted IS NULL'
+NOT_TOOTED_CONDITION = 'AND last_tooted IS NULL'
 
 
 @contextmanager
@@ -40,7 +41,7 @@ def db_cursor(config, cursorclass=Cursor):
         yield cursor
 
 
-def query_by_wicks_id(config, wicks, tweeted=False):
+def query_by_wicks_id(config, wicks, tweeted=False, tooted=False):
     """
     Search for a play based on the Wicks ID
     """
@@ -49,12 +50,17 @@ def query_by_wicks_id(config, wicks, tweeted=False):
     if not tweeted:
         tweeted_condition = NOT_TWEETED_CONDITION
 
-    query_string = '\n'.join((PLAY_SELECT, wicks_condition, tweeted_condition))
+    tooted_condition = ''
+    if not tooted:
+        tooted_condition = NOT_TOOTED_CONDITION
+
+    query_string = '\n'.join((PLAY_SELECT, wicks_condition, tweeted_condition,
+        tooted_condition))
 
     return query_play(config, query_string, wicks)
 
 
-def query_by_date(config, greg_date, tweeted=False, limit=None):
+def query_by_date(config, greg_date, tweeted=False, tooted=False, limit=None):
     """
     Search for a play based on the Gregorian date
     """
@@ -153,3 +159,24 @@ def tweet_db(cursor, play_id):
             play_id,
             err
             )
+
+
+def toot_db(cursor, play_id):
+    """
+    Save data to db
+    """
+    tootq = """UPDATE spectacle_play
+    SET last_tooted = %s
+    WHERE id = %s
+    """
+    timestamp = datetime.now().strftime("%Y-%m-%d")
+    try:
+        cursor.execute(tootq, [timestamp, play_id])
+        LOG.debug("Marked play %s as tooted on %s", play_id, timestamp)
+    except DatabaseError as err:
+        LOG.error(
+            "Error updating tooted timestamp for %s: %s",
+            play_id,
+            err
+            )
+

@@ -47,6 +47,7 @@ TABLE_SQL = {
         greg_date date NOT NULL,
         notes text,
         last_tweeted date,
+        last_tooted date,
         PRIMARY KEY (id),
         KEY greg_date (greg_date)
     )"""

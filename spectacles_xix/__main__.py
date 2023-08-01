@@ -30,10 +30,12 @@ def parse_command_args():
  Stage'
         )
     parser.add_argument('-n', '--no_tweet', action='store_true')
+    parser.add_argument('-m', '--no_toot', action='store_true')
     parser.add_argument('-d', '--date', type=str)
     parser.add_argument('-w', '--wicks', type=str)
     parser.add_argument('-b', '--book', action='store_true')
     parser.add_argument('-t', '--tweeted', action='store_true')
+    parser.add_argument('-p', '--tooted', action='store_true')
     parser.add_argument('-f', '--force', action='store_true')
     parser.add_argument('-c', '--config_file', type=str, required=True)
     return parser.parse_args()
@@ -58,7 +60,8 @@ def main():
 
     local_now = timezone(TIMEZONE).localize(datetime.now())
     play_list = get_play_list(
-        config['db'], args.wicks, local_now, args.date, args.tweeted
+        config['db'], args.wicks, local_now, args.date, args.tweeted,
+        args.tooted
         )
 
     if not play_list:
@@ -67,7 +70,7 @@ def main():
     if not is_time_to_tweet(args, local_now.hour, len(play_list)):
         return
 
-    get_and_tweet(args.book, args.no_tweet, config, local_now, play_list[0])
+    get_and_tweet(args.book, args.no_tweet, args.no_toot, config, local_now, play_list[0])
 
 
 if __name__ == '__main__':

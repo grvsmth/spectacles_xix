@@ -13,7 +13,7 @@ from .db_ops import (
     abbreviation_db, db_cursor, query_by_date, query_by_wicks_id
     )
 from .play import Play
-from .tweet import send_tweet
+from .tweet import send_tweet, send_toot
 
 basicConfig(level="DEBUG")
 LOG = getLogger(__name__)
@@ -35,7 +35,7 @@ def get_200_years_ago(local_now):
     return local_now.date() + relativedelta.relativedelta(years=-200)
 
 
-def check_by_date(config, local_now, args_date, tweeted):
+def check_by_date(config, local_now, args_date, tweeted, tooted):
     """
     Given a config dict, a date and whether to search already tweeted plays,
     check for plays with the given date.  If there are non, check from the
@@ -46,13 +46,14 @@ def check_by_date(config, local_now, args_date, tweeted):
     else:
         today_date = get_200_years_ago(local_now)
 
-    play_list = query_by_date(config, today_date, tweeted)
+    play_list = query_by_date(config, today_date, tweeted, tooted)
 
     if not play_list:
         # Look for one play from the first of the month
         first_of_the_month = today_date.replace(day=1)
         LOG.info("Checking for plays on %s", first_of_the_month)
-        play_list = query_by_date(config, first_of_the_month, tweeted, limit=1)
+        play_list = query_by_date(config, first_of_the_month, tweeted, tooted,
+            limit=1)
 
     return play_list
 
@@ -91,14 +92,14 @@ def expand_abbreviation(cursor, phrase):
     return phrase
 
 
-def get_play_list(config, wicks, local_now, args_date, tweeted):
+def get_play_list(config, wicks, local_now, args_date, tweeted, tooted):
     """
     Depending on the arguments, check by Wicks ID or date
     """
     if wicks:
-        play_list = query_by_wicks_id(config, wicks, tweeted)
+        play_list = query_by_wicks_id(config, wicks, tweeted, tooted)
     else:
-        play_list = check_by_date(config, local_now, args_date, tweeted)
+        play_list = check_by_date(config, local_now, args_date, tweeted, tooted)
 
     return play_list
 
@@ -119,24 +120,39 @@ def get_play(cursor, local_now, play_dict):
     return play
 
 
-def get_and_tweet(args_book, no_tweet, config, local_now, play_dict):
+def get_and_tweet(args_book, no_tweet, no_toot, config, local_now, play_dict):
     """
     Get a cursor, get the play, check for books, send the tweet
     """
     with db_cursor(config['db']) as cursor:
         play = get_play(cursor, local_now, play_dict)
+        play_id = play_dict['id']
 
         book_result = check_books_api(
             args_book, config['path']['google_service_account'], play
             )
 
+        book_url = book_result.get_better_book_url()
+        book_image = book_result.get_image_file()
+
+        if not no_toot:
+            char_limit = int(config['mastodon'].get('character_limit', 500))
+            mastodon_message = play.get_description(char_limit) + ' ' + book_url
+            send_toot(cursor,
+                config['mastodon'],
+                play_id,
+                mastodon_message,
+                book_image)
+
         if no_tweet:
             return
+
+        twitter_message = str(play) + ' ' + book_url
 
         send_tweet(
             cursor,
             config['twitter'],
-            play_dict['id'],
-            str(play) + ' ' + book_result.get_better_book_url(),
-            book_result.get_image_file()
+            play_id,
+            twitter_message,
+            book_image
             )
