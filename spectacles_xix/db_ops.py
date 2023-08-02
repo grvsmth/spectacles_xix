@@ -70,12 +70,17 @@ def query_by_date(config, greg_date, tweeted=False, tooted=False, limit=None):
     if not tweeted:
         tweeted_condition = NOT_TWEETED_CONDITION
 
+    tooted_condition = ''
+    if not tooted:
+        tooted_condition = NOT_TOOTED_CONDITION
+
     limit_string = ''
     if limit:
         limit_string = "LIMIT 1"
 
     query_string = '\n'.join(
-        (PLAY_SELECT, date_condition, tweeted_condition, limit_string)
+        (PLAY_SELECT, date_condition, tweeted_condition, tooted_condition,
+        limit_string)
         )
     return query_play(config, query_string, greg_date.isoformat())
 
